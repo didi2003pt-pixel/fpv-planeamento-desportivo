@@ -1,5 +1,5 @@
 import type { DemoActivity } from './demo';
-import { addDays, statusLabel, typeMeta } from './demo';
+import { statusLabel, typeMeta } from './demo';
 
 const weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -99,7 +99,6 @@ export async function exportDemoExcel(
     sheet.getCell('A12').value = 'DEMONSTRAÇÃO — dados fictícios; não é um planeamento oficial.';
     sheet.getCell('A12').font = { italic: true, color: { argb: 'FF66778C' } };
     sheet.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1, paperSize: 9 };
-    sheet.printOptions = { horizontalCentered: true };
   }
 
   const output = await workbook.xlsx.writeBuffer();
