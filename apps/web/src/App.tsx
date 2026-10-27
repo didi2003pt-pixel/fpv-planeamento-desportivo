@@ -6,13 +6,14 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ptLocale from '@fullcalendar/core/locales/pt';
 import type { EventInput } from '@fullcalendar/core';
 import {
-  addDays, demoActivities, statusLabel, typeMeta,
+  addDays, demoActivities, formatISO, statusLabel, typeMeta,
   type ActivityType, type DemoActivity,
 } from './demo';
 import { exportDemoExcel } from './exportExcel';
+import { fpvReferenceClasses } from './exportClassMap';
+import CreateActivityDialog from './CreateActivityDialog';
 
-const allActivities = demoActivities();
-const sailingClasses = Array.from(new Set(allActivities.map((a) => a.sailingClass))).sort();
+const sailingClasses = [...fpvReferenceClasses];
 const dateFormatter = new Intl.DateTimeFormat('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
 
 function prettyDate(iso: string): string {
@@ -51,13 +52,16 @@ function ActivityDetail({ activity }: { activity: DemoActivity | undefined }) {
       ) : <p className="muted note">Os nomes dos participantes ainda não foram indicados.</p>}
       {activity.expectedAthletes > activity.participants.length &&
         <p className="subtle-note">Faltam indicar {activity.expectedAthletes - activity.participants.length} nomes previstos.</p>}
-      <p className="demo-footnote">Amostra fictícia · edição disponível num próximo incremento.</p>
+      <p className="demo-footnote">Dados apenas de demonstração · ainda sem edição nem gravação definitiva.</p>
     </section>
   );
 }
 
 function App() {
   const calendarRef = useRef<FullCalendar>(null);
+  const [allActivities, setAllActivities] = useState<DemoActivity[]>(() => demoActivities());
+  const [creatingFor, setCreatingFor] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
   const [selectedClass, setSelectedClass] = useState('ALL');
   const [selectedType, setSelectedType] = useState('ALL');
   const [selectedId, setSelectedId] = useState('01');
@@ -79,7 +83,7 @@ function App() {
   const filtered = useMemo(() => allActivities.filter((a) =>
     (selectedClass === 'ALL' || a.sailingClass === selectedClass) &&
     (selectedType === 'ALL' || a.type === selectedType),
-  ), [selectedClass, selectedType]);
+  ), [allActivities, selectedClass, selectedType]);
 
   const entries: EventInput[] = useMemo(() => filtered.map((a) => ({
     id: a.id,
@@ -94,6 +98,16 @@ function App() {
 
   const selected = filtered.find((a) => a.id === selectedId) ?? filtered[0];
   const currentClasses = new Set(filtered.map((a) => a.sailingClass)).size;
+
+  function addActivity(activity: DemoActivity) {
+    setAllActivities((current) => [...current, activity]);
+    setSelectedClass('ALL');
+    setSelectedType('ALL');
+    setSelectedId(activity.id);
+    calendarRef.current?.getApi().gotoDate(activity.start);
+    setCreatingFor(null);
+    setNotice('Atividade de demonstração adicionada. Já aparece no calendário e na exportação Excel desta sessão.');
+  }
 
   function changeView(view: string) {
     calendarRef.current?.getApi().changeView(view);
@@ -174,12 +188,19 @@ function App() {
               <h1>Planeamento desportivo</h1>
               <p>Uma visão clara das atividades, equipas e calendário das classes.</p>
             </div>
-            <button type="button" className="export-button" onClick={downloadExcel} disabled={exporting}>
-              <span aria-hidden="true">⇩</span> {exporting ? 'A preparar Excel…' : 'Exportar Excel'}
-            </button>
+            <div className="welcome-actions">
+              <button type="button" className="create-button"
+                onClick={() => { setNotice(''); setCreatingFor(formatISO(calendarRef.current?.getApi().getDate() ?? new Date())); }}>
+                <span aria-hidden="true">＋</span> Nova atividade
+              </button>
+              <button type="button" className="export-button" onClick={downloadExcel} disabled={exporting}>
+                <span aria-hidden="true">⇩</span> {exporting ? 'A preparar Excel…' : 'Exportar Excel'}
+              </button>
+            </div>
           </div>
 
-          <div className="disclaimer"><strong>Pré-visualização funcional:</strong> todos os eventos e atletas apresentados são fictícios. O Excel exportado também contém apenas dados de demonstração.</div>
+          <div className="disclaimer"><strong>Modo de demonstração pública:</strong> os exemplos iniciais são fictícios. Não introduzas nomes nem dados pessoais reais. Os novos registos ficam apenas nesta página enquanto estiver aberta; perdem-se ao atualizar.</div>
+          {notice && <div className="create-notice" role="status">{notice}</div>}
 
           <div className="stats-grid">
             {stats.map((stat) => (
@@ -237,6 +258,7 @@ function App() {
                   displayEventTime={false}
                   events={entries}
                   eventClick={(info) => setSelectedId(info.event.id)}
+                  dateClick={(info) => { setNotice(''); setCreatingFor(info.dateStr); }}
                   datesSet={(info) => { setCalendarTitle(info.view.title); setViewType(info.view.type); }}
                 />
               </div>
@@ -252,6 +274,8 @@ function App() {
             </aside>
           </section>
           <footer>FPV Planeamento Desportivo · Protótipo de avaliação · Não utilizar para dados reais.</footer>
+          {creatingFor && <CreateActivityDialog startDate={creatingFor}
+            onCreate={addActivity} onClose={() => setCreatingFor(null)} /> }
         </main>
       </div>
     </div>

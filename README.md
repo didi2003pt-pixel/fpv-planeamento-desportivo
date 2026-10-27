@@ -60,3 +60,13 @@ O código permite continuar a usar Docker localmente, pois o build padrão não 
 
 ## Exportação conforme a lógica do Excel de 2026
 O botão **Exportar Excel** gera agora `Mapa Classes 01` a `Mapa Classes 12` conforme o mês ou ano selecionado, **como primeiras folhas** da exportação, com os 17 grupos de referência, linhas por tipo, dias de 1 a 31, totais calculados por dia-classe e cores diferenciadas. Mantém também `Atividades` e `Calendário MM`. O mapa distingue eventos cancelados com × e impede dupla contagem no resumo da classe. Os mapas continuam fictícios até existir a API segura da aplicação. Testar com `cd apps/web && npm run test:mapa`.
+
+## INC-005 — formulário de criação em demonstração pública
+
+No GitHub Pages, o botão **Nova atividade** (ou um clique num dia do calendário) permite experimentar um formulário com classe, tipo, datas inclusivas, local, estado, número previsto de atletas e nomes fictícios indicados linha a linha. O novo evento aparece de imediato no calendário e participa nas exportações Excel da **sessão atual**.
+
+**Não existe gravação:** atualizar ou fechar a página elimina os eventos criados nesta sessão. Não há autenticação real nem partilha entre utilizadores. Nunca introduzir nomes ou dados pessoais reais no protótipo público. A implementação definitiva exigirá um backend autenticado e base de dados com permissões por classe.
+
+Validação automática: título obrigatório, classe existente, datas válidas e ordenadas, número previsto inteiro não negativo, máximo de 200 atletas, não permitir mais nomes do que previstos nem nomes duplicados. Testes: `cd apps/web && npm run test:form`.
+
+Não se alterou a estrutura do Excel: as novas atividades entram no **Mapa Classes**, na lista de **Atividades** e no calendário visual já aprovado.
