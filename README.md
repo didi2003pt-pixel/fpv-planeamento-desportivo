@@ -56,3 +56,7 @@ Ver [Requisitos](docs/REQUISITOS.md), [Decisões](docs/DECISOES.md) e [Plano](do
 - Nunca colocar nomes reais de atletas em dados de demonstração no repositório público.
 
 O código permite continuar a usar Docker localmente, pois o build padrão não usa o modo `pages`.
+
+
+## Exportação conforme a lógica do Excel de 2026
+O botão **Exportar Excel** gera agora `Mapa Classes 01` a `Mapa Classes 12` conforme o mês ou ano selecionado, **como primeiras folhas** da exportação, com os 17 grupos de referência, linhas por tipo, dias de 1 a 31, totais calculados por dia-classe e cores diferenciadas. Mantém também `Atividades` e `Calendário MM`. O mapa distingue eventos cancelados com × e impede dupla contagem no resumo da classe. Os mapas continuam fictícios até existir a API segura da aplicação. Testar com `cd apps/web && npm run test:mapa`.
