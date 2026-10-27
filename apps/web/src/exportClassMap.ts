@@ -1,5 +1,5 @@
 import type { Workbook, Worksheet, Cell } from 'exceljs';
-import { typeMeta, type ActivityType, type DemoActivity } from './demo';
+import { statusLabel, typeMeta, type ActivityType, type DemoActivity } from './demo';
 
 /**
  * As 17 linhas principais (15 classes + 2 áreas de formação) seguem a ordem
@@ -48,6 +48,21 @@ function isoDate(year: number, monthIndex: number, day: number): string {
 
 function isInDay(event: DemoActivity, iso: string): boolean {
   return event.start <= iso && event.end >= iso;
+}
+
+/** Texto apresentado numa nota do Excel ao colocar o rato sobre um dia com atividade. */
+function activityNote(events: DemoActivity[]): string {
+  return events.map((event) => [
+    typeMeta[event.type].label + ': ' + event.title,
+    'Local: ' + (event.location.trim() || 'Por definir'),
+    'Classe: ' + event.sailingClass,
+    'Datas: ' + event.start + ' a ' + event.end,
+    'Estado: ' + statusLabel[event.status],
+  ].join('\n')).join('\n\n');
+}
+
+function annotateDay(cell: Cell, events: DemoActivity[]): void {
+  if (events.length > 0) cell.note = activityNote(events);
 }
 
 function daysInMonth(year: number, monthIndex: number): number {
@@ -227,6 +242,7 @@ export function addClassMap(
       const cancelled = todayEvents.length - active;
       writeDayCell(sheet, cursor, col, active, cancelled, undefined, true,
         [0, 6].includes(new Date(year, monthIndex, day).getDay()));
+      annotateDay(summary.getCell(col), todayEvents);
     }
     cursor += 1;
 
@@ -252,6 +268,7 @@ export function addClassMap(
         const active = todayEvents.filter((event) => event.status !== 'CANCELLED').length;
         writeDayCell(sheet, cursor, col, active, todayEvents.length - active,
           type, false, [0, 6].includes(new Date(year, monthIndex, day).getDay()));
+        annotateDay(line.getCell(col), todayEvents);
       }
       cursor += 1;
     }
@@ -275,7 +292,8 @@ export function addClassMap(
   sheet.mergeCells(footerRow + 1, 1, footerRow + 1, 33);
   sheet.getCell(footerRow + 1, 1).value =
     '1 = classe ativa nesse dia; as sublinhas aparecem apenas quando o tipo tem atividades no mês; × = apenas canceladas. ' +
-    'Os totais por tipo podem sobrepor-se e não devem ser somados para obter dias-classe.';
+    'Os totais por tipo podem sobrepor-se e não devem ser somados para obter dias-classe. ' +
+    'Passa o rato sobre um dia preenchido para ver prova, estágio e local.';
   sheet.getCell(footerRow + 1, 1).font = { name: 'Aptos', italic: true, size: 10,
     color: hex(dark) };
   sheet.getRow(footerRow + 1).height = 22;
@@ -287,6 +305,80 @@ export function addClassMap(
   sheet.getCell(footerRow + 2, 1).font = { name: 'Aptos', italic: true, size: 10, color: hex(grey) };
   sheet.getRow(footerRow + 2).height = 22;
 
+  // Na mesma folha: identificação visível das provas e estágios, sem
+  // alargar as 31 colunas do mapa original.
+  const specialEvents = allEvents.filter((event) =>
+    (event.type === 'COMPETITION' || event.type === 'CAMP')
+    && event.start <= lastDay && event.end >= firstDay
+  ).sort((a, b) => a.start.localeCompare(b.start)
+    || a.sailingClass.localeCompare(b.sailingClass)
+    || a.title.localeCompare(b.title));
+
+  const sectionRow = footerRow + 4;
+  sheet.mergeCells(sectionRow, 1, sectionRow, 33);
+  const section = sheet.getCell(sectionRow, 1);
+  section.value = 'IDENTIFICAÇÃO DE PROVAS E ESTÁGIOS  |  ' + monthName.toUpperCase();
+  background(section, navy);
+  section.font = { name: 'Aptos', size: 12, bold: true, color: hex('FFFFFFFF') };
+  section.alignment = { vertical: 'middle', indent: 1 };
+  sheet.getRow(sectionRow).height = 28;
+
+  const headerRow = sectionRow + 1;
+  const columns = [
+    { start: 1, end: 1, label: 'CLASSE' },
+    { start: 2, end: 5, label: 'TIPO' },
+    { start: 6, end: 14, label: 'PROVA / ESTÁGIO' },
+    { start: 15, end: 22, label: 'LOCAL / PAÍS' },
+    { start: 23, end: 29, label: 'DATAS' },
+    { start: 30, end: 33, label: 'ESTADO' },
+  ];
+  for (const { start, end, label } of columns) {
+    if (end > start) sheet.mergeCells(headerRow, start, headerRow, end);
+    const cell = sheet.getCell(headerRow, start);
+    cell.value = label;
+    background(cell, 'FFE4EDF8');
+    cell.font = { name: 'Aptos', size: 9, bold: true, color: hex(navy) };
+    cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  }
+  sheet.getRow(headerRow).height = 24;
+
+  for (const [index, activity] of specialEvents.entries()) {
+    const rowNumber = headerRow + 1 + index;
+    const rowValues = [
+      { start: 1, end: 1, text: referenceClassName(activity.sailingClass) },
+      { start: 2, end: 5, text: typeMeta[activity.type].label },
+      { start: 6, end: 14, text: activity.title },
+      { start: 15, end: 22, text: activity.location.trim() || 'Por definir' },
+      { start: 23, end: 29, text: activity.start + ' a ' + activity.end },
+      { start: 30, end: 33, text: statusLabel[activity.status] },
+    ];
+    const fill = index % 2 === 0 ? 'FFFFFFFF' : 'FFF4F7FC';
+    for (const { start, end, text } of rowValues) {
+      if (end > start) sheet.mergeCells(rowNumber, start, rowNumber, end);
+      const cell = sheet.getCell(rowNumber, start);
+      cell.value = text;
+      background(cell, fill);
+      cell.font = { name: 'Aptos', size: 10,
+        bold: start === 1 || start === 6, color: hex(dark) };
+      cell.alignment = { wrapText: true, vertical: 'middle', indent: 1 };
+      cell.border = { bottom: { style: 'hair', color: hex(faded) } };
+    }
+    const typeCell = sheet.getCell(rowNumber, 2);
+    background(typeCell, 'FF' + typeMeta[activity.type].color.slice(1).toUpperCase());
+    typeCell.font = { name: 'Aptos', size: 10, bold: true, color: hex('FFFFFFFF') };
+    sheet.getRow(rowNumber).height =
+      Math.min(60, 31 + (Math.max(activity.title.length, activity.location.length) > 55 ? 18 : 0));
+  }
+  const lastTableRow = Math.max(headerRow + 1, headerRow + specialEvents.length);
+  if (specialEvents.length === 0) {
+    sheet.mergeCells(headerRow + 1, 1, headerRow + 1, 33);
+    const empty = sheet.getCell(headerRow + 1, 1);
+    empty.value = 'Sem provas ou estágios registados neste mês.';
+    empty.font = { name: 'Aptos', italic: true, size: 10, color: hex(grey) };
+    empty.alignment = { vertical: 'middle', indent: 1 };
+    sheet.getRow(headerRow + 1).height = 26;
+  }
+
   sheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 6, topLeftCell: 'C7' }];
   sheet.pageSetup = {
     // OOXML paperSize=8 representa A3; os tipos ExcelJS 4.4 não incluem este valor.
@@ -295,7 +387,7 @@ export function addClassMap(
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 0,
-    printArea: 'A1:AG' + (footerRow + 2),
+    printArea: 'A1:AG' + lastTableRow,
     margins: { left: 0.25, right: 0.25, top: 0.4, bottom: 0.4, header: 0.15, footer: 0.15 },
   };
   return sheet;
