@@ -1,5 +1,6 @@
 import type { DemoActivity } from './demo';
 import { statusLabel, typeMeta } from './demo';
+import { addClassMap } from './exportClassMap';
 
 const weekdays = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -14,6 +15,14 @@ export async function exportDemoExcel(
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'FPV Planeamento Desportivo — demonstração';
   workbook.created = new Date();
+
+  const year = date.getFullYear();
+  const months = fullYear ? Array.from({ length: 12 }, (_, i) => i) : [date.getMonth()];
+  // A primeira folha replica a lógica do mapa original da Federação.
+  // Na vista anual, criamos uma folha separada para cada mês.
+  for (const month of months) {
+    addClassMap(workbook, events, year, month);
+  }
 
   const list = workbook.addWorksheet('Atividades');
   list.columns = [
@@ -50,8 +59,6 @@ export async function exportDemoExcel(
   list.views = [{ state: 'frozen', ySplit: 1 }];
   list.pageSetup.orientation = 'landscape';
 
-  const year = date.getFullYear();
-  const months = fullYear ? Array.from({ length: 12 }, (_, i) => i) : [date.getMonth()];
   for (const month of months) {
     const monthDate = new Date(year, month, 1);
     const monthTitle = new Intl.DateTimeFormat('pt-PT', { month: 'long', year: 'numeric' }).format(monthDate);
