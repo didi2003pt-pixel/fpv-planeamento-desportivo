@@ -142,11 +142,12 @@ export function addClassMap(
   sheet.getCell('A4').value = 'TIPO DE ATIVIDADE';
   sheet.getCell('A4').font = { name: 'Aptos', size: 9, bold: true, color: hex(grey) };
   for (const [index, type] of [...baseTypes, ...remainingTypes].entries()) {
-    const cell = sheet.getCell(4, index + 3);
+    const firstLegendCol = 3 + index * 3;
+    const cell = sheet.getCell(4, firstLegendCol);
     cell.value = '● ' + typeMeta[type].label;
     cell.font = { name: 'Aptos', size: 9, bold: true,
       color: hex('FF' + typeMeta[type].color.slice(1).toUpperCase()) };
-    sheet.mergeCells(4, index + 3, 4, index + 5);
+    sheet.mergeCells(4, firstLegendCol, 4, firstLegendCol + 2);
   }
   sheet.getRow(4).height = 23;
 
@@ -278,7 +279,8 @@ export function addClassMap(
 
   sheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 6, topLeftCell: 'C7' }];
   sheet.pageSetup = {
-    paperSize: 8, // A3 landscape, com 31 dias: mais legível do que A4.
+    // OOXML paperSize=8 representa A3; os tipos ExcelJS 4.4 não incluem este valor.
+    paperSize: 8 as Worksheet['pageSetup']['paperSize'],
     orientation: 'landscape',
     fitToPage: true,
     fitToWidth: 1,
