@@ -1,0 +1,72 @@
+name: CI - build e Docker
+on:
+  pull_request:
+  push:
+    branches: [main, "feat/**"]
+
+jobs:
+  build-api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências da API
+        run: npm install --no-audit --no-fund
+      - name: Validar schema Prisma
+        env:
+          DATABASE_URL: postgresql://fpv:local@localhost:5432/fpv_planeamento?schema=public
+        run: npm run prisma:validate
+      - name: Compilar API
+        run: npm run build
+
+  build-web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências web
+        run: npm install --no-audit --no-fund
+      - name: Verificar TypeScript e compilar interface
+        run: npm run build
+      - name: Verificar build estático do GitHub Pages
+        run: npm run build -- --mode pages
+
+  smoke-docker:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: ci_test_password_123
+      APP_PORT: '8080'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir e iniciar containers
+        run: docker compose up --build -d
+      - name: Verificar comunicação entre nginx e API
+        shell: bash
+        run: |
+          for i in $(seq 1 35); do
+            if curl --fail --silent http://localhost:8080/api/health | grep -q '"status":"ok"'; then
+              echo "API acessível através do frontend"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Health check não respondeu a tempo"
+          exit 1
+      - name: Mostrar diagnóstico em caso de falha
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=100 api web db
+      - name: Parar containers
+        if: always()
+        run: docker compose down -v
