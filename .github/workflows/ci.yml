@@ -38,6 +38,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Verificar TypeScript e compilar interface
         run: npm run build
+      - name: Verificar build estático do GitHub Pages
+        run: npm run build -- --mode pages
 
   smoke-docker:
     runs-on: ubuntu-latest

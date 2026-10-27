@@ -63,10 +63,11 @@ function App() {
   const [selectedId, setSelectedId] = useState('01');
   const [viewType, setViewType] = useState('dayGridMonth');
   const [calendarTitle, setCalendarTitle] = useState('');
-  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline' | 'demo'>(import.meta.env.MODE === 'pages' ? 'demo' : 'checking');
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
+    if (import.meta.env.MODE === 'pages') return;
     const controller = new AbortController();
     fetch('/api/health', { signal: controller.signal })
       .then((res) => { if (!res.ok) throw new Error('API indisponível'); return res.json(); })
@@ -160,7 +161,7 @@ function App() {
           <div className="breadcrumbs">Plataforma <span>/</span> <strong>Calendário</strong></div>
           <div className="topbar-right">
             <span className={'connection-pill ' + apiStatus}><span className="status-light" />
-              {apiStatus === 'online' ? 'API ligada' : apiStatus === 'offline' ? 'API desligada' : 'A verificar API'}
+              {apiStatus === 'demo' ? 'Demonstração online' : apiStatus === 'online' ? 'API ligada' : apiStatus === 'offline' ? 'API desligada' : 'A verificar API'}
             </span>
             <span className="prototype-tag">PROTÓTIPO</span>
           </div>

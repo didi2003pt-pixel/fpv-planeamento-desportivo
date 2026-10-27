@@ -43,3 +43,16 @@ Os treinadores registam os seus planeamentos por classe, incluindo tipo de ativi
 - Validar permissões, backup, RGPD e testes de aceitação.
 
 Ver [Requisitos](docs/REQUISITOS.md), [Decisões](docs/DECISOES.md) e [Plano](docs/PLANO.md).
+
+## Demonstração online — GitHub Pages
+
+- Publicação **estática** por GitHub Actions, sem serviço de API nem base de dados online.
+- URL prevista: https://didi2003pt-pixel.github.io/fpv-planeamento-desportivo/
+- Quando a publicação estiver configurada no repositório, cada push à `main` volta a publicar a demonstração.
+- Caso ainda não esteja ativado: `Settings > Pages > Build and deployment > Source > GitHub Actions`.
+- O build usa `vite build --mode pages`, que define a base `/fpv-planeamento-desportivo/` para os recursos JS/CSS.
+- **Funciona:** calendário, filtros, visualização e exportação de um Excel com **dados fictícios**.
+- **Não funciona:** login, guardar/partilhar dados, API de produção, ficheiros Excel reais da Federação ou edição por treinadores.
+- Nunca colocar nomes reais de atletas em dados de demonstração no repositório público.
+
+O código permite continuar a usar Docker localmente, pois o build padrão não usa o modo `pages`.
