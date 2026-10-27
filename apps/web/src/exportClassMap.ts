@@ -1,4 +1,4 @@
-import type { Workbook, Worksheet } from 'exceljs';
+import type { Workbook, Worksheet, Cell } from 'exceljs';
 import { typeMeta, type ActivityType, type DemoActivity } from './demo';
 
 /**
@@ -38,7 +38,7 @@ function hex(argb: string): { argb: string } {
   return { argb };
 }
 
-function background(cell: Worksheet['getCell'] extends (...args: never[]) => infer R ? R : never, color: string): void {
+function background(cell: Cell, color: string): void {
   cell.fill = { type: 'pattern', pattern: 'solid', fgColor: hex(color) };
 }
 
@@ -105,7 +105,7 @@ export function addClassMap(
     .format(new Date(year, monthIndex, 1));
   const sheet = workbook.addWorksheet('Mapa Classes ' + month);
 
-  const catalogue = [...fpvReferenceClasses];
+  const catalogue: string[] = [...fpvReferenceClasses];
   const knownKeys = new Set(catalogue.map(cleanClass));
   for (const event of allEvents) {
     const normalized = referenceClassName(event.sailingClass);
@@ -185,7 +185,6 @@ export function addClassMap(
   let cursor = 7;
   let classDays = 0;
   let activeClasses = 0;
-  let cancelledDays = 0;
   for (const className of catalogue) {
     const classEvents = allEvents.filter((e) =>
       cleanClass(referenceClassName(e.sailingClass)) === cleanClass(className));
@@ -218,7 +217,6 @@ export function addClassMap(
       const todayEvents = classEvents.filter((event) => isInDay(event, iso));
       const active = todayEvents.filter((event) => event.status !== 'CANCELLED').length;
       const cancelled = todayEvents.length - active;
-      if (cancelled > 0 && active === 0) cancelledDays += 1;
       writeDayCell(sheet, cursor, col, active, cancelled, undefined, true,
         [0, 6].includes(new Date(year, monthIndex, day).getDay()));
     }
