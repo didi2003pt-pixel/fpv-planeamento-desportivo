@@ -48,3 +48,16 @@ Fonte: conversa sobre planeamento desportivo da FPV e ficheiro Excel fornecido p
 - Quem confirma mensalmente, e quando fecha o mês?
 - Os atletas pertencem a uma classe no tempo, ou podem estar em várias?
 - As exportações com nomes de menores são permitidas para quais perfis?
+
+
+## Exportação FPV por classe — referência de 2026 (INC-003)
+- A folha original de 2026 tem 17 linhas principais: 15 classes e 2 áreas de formação; cada grupo apresenta uma linha-resumo de dias e sublinhas de competição e estágio.
+- O novo ficheiro Excel exportado inclui uma folha `Mapa Classes MM` por mês como primeira(s) folha(s), seguida da lista detalhada e dos calendários semanais.
+- As colunas mostram 1 a 31 e o dia da semana; os dias inexistentes ficam desativados.
+- Uma classe só conta **um dia-classe por dia**, mesmo havendo vários eventos simultâneos; eventos cancelados não contam como execução planeada ativa.
+- Sublinha do tipo mostra 1 ou mais atividades simultâneas; × indica apenas atividades canceladas nesse dia.
+- As linhas de competição, estágio e treino aparecem em todas as classes; deslocações, formação e outras só aparecem quando relevantes.
+- Classes do modelo FPV aparecem mesmo sem eventos no mês; classes adicionais são incluídas sem adulterar as 17 originais.
+- Vista anual exporta os 12 mapas mensais (mais as 12 folhas de calendário) sem depender de fórmulas antigas de resumos.
+- A folha `Atividades` preserva os nomes indicados, datas, treinadores, locais, estado e número previsto de atletas.
+- Todas as folhas do protótipo continuam a usar apenas **dados fictícios**. Não implica migração de dados pessoais do Excel original.

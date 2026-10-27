@@ -36,6 +36,8 @@ jobs:
           node-version: '22'
       - name: Instalar dependências web
         run: npm install --no-audit --no-fund
+      - name: Testar mapa mensal por classe
+        run: npm run test:mapa
       - name: Verificar TypeScript e compilar interface
         run: npm run build
       - name: Verificar build estático do GitHub Pages
