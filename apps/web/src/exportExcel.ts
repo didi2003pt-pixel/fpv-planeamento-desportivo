@@ -155,8 +155,7 @@ export async function exportDemoExcel(
       color: { argb: 'FF66778C' }, size: 10 };
     sheet.getRow(13).height = 23;
     sheet.views = [{ state: 'frozen', ySplit: 4 }];
-    sheet.printArea = 'A1:G13';
-    sheet.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
+    sheet.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9, printArea: 'A1:G13' };
   }
 
   const output = await workbook.xlsx.writeBuffer();
