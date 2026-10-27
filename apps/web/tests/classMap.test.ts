@@ -59,3 +59,29 @@ test('O Excel produzido é legível ao voltar a importar', async () => {
   await loaded.xlsx.load(file as Buffer);
   assert.equal(loaded.getWorksheet('Mapa Classes 10')?.getCell('B7').value, 11);
 });
+
+test('Classes sem atividades mantêm resumo, mas não criam três sublinhas vazias', () => {
+  const wb = new ExcelJS.Workbook();
+  const camp = record('A', 'CAMP', '2026-10-17', '2026-10-27');
+  const future = record('B', 'COMPETITION', '2026-11-02', '2026-11-03');
+  const map = addClassMap(wb, [camp, future], 2026, 9);
+  assert.equal(map.getCell('A7').value, 'ILCA 7');
+  assert.equal(map.getCell('A8').value, '  Estágio');
+  assert.equal(map.getCell('A10').value, 'ILCA 6');
+  assert.equal(map.getCell('B10').value, 0);
+  assert.equal(map.getCell('A11').value, '470 MX');
+  const classNames = Array.from({ length: map.rowCount }, (_, index) =>
+    map.getCell(index + 1, 1).value).filter((value) =>
+      typeof value === 'string' && fpvReferenceClasses.includes(value as typeof fpvReferenceClasses[number]));
+  assert.equal(classNames.length, fpvReferenceClasses.length);
+});
+
+test('Cancelamento isolado mantém a categoria visível sem aumentar os dias-classe', () => {
+  const wb = new ExcelJS.Workbook();
+  const cancelled = record('X', 'TRAINING', '2026-10-29', '2026-10-29', 'CANCELLED');
+  const map = addClassMap(wb, [cancelled], 2026, 9);
+  assert.equal(map.getCell('B7').value, 0);
+  assert.equal(map.getCell('A8').value, '  Treino');
+  assert.equal(map.getCell(7, 31).value, '×');
+  assert.equal(map.getCell(8, 31).value, '×');
+});
