@@ -183,15 +183,20 @@ export function addClassMap(
   sheet.getRow(5).height = 23;
   sheet.getRow(6).height = 21;
 
+  const firstDay = isoDate(year, monthIndex, 1);
+  const lastDay = isoDate(year, monthIndex, days);
   let cursor = 7;
   let classDays = 0;
   let activeClasses = 0;
   for (const className of catalogue) {
     const classEvents = allEvents.filter((e) =>
       cleanClass(referenceClassName(e.sailingClass)) === cleanClass(className));
-    const usedTypes = [...baseTypes, ...remainingTypes.filter((t) =>
-      classEvents.some((event) => event.type === t)
-      || (className.startsWith('Formação ') && t === 'EDUCATION'))];
+    // Mostrar apenas sublinhas com atividades neste mês.
+    // As 17 classes principais continuam sempre presentes, mesmo sem planeamento.
+    const monthlyEvents = classEvents.filter((event) =>
+      event.start <= lastDay && event.end >= firstDay);
+    const usedTypes = [...baseTypes, ...remainingTypes].filter((type) =>
+      monthlyEvents.some((event) => event.type === type));
     const classCount = countClassDays(classEvents, year, monthIndex);
     classDays += classCount;
     if (classCount) activeClasses += 1;
@@ -200,12 +205,14 @@ export function addClassMap(
     summary.height = 24;
     const summaryLabel = summary.getCell(1);
     summaryLabel.value = className;
-    background(summaryLabel, lightBlue);
-    summaryLabel.font = { name: 'Aptos', bold: true, size: 10, color: hex(navy) };
+    background(summaryLabel, monthlyEvents.length ? lightBlue : pale);
+    summaryLabel.font = { name: 'Aptos', bold: true, size: 10,
+      color: hex(monthlyEvents.length ? navy : grey) };
     summaryLabel.alignment = { vertical: 'middle', indent: 1 };
     summary.getCell(2).value = classCount;
-    background(summary.getCell(2), lightBlue);
-    summary.getCell(2).font = { name: 'Aptos', bold: true, size: 11, color: hex(navy) };
+    background(summary.getCell(2), monthlyEvents.length ? lightBlue : pale);
+    summary.getCell(2).font = { name: 'Aptos', bold: true, size: 11,
+      color: hex(monthlyEvents.length ? navy : grey) };
     summary.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
 
     for (let day = 1; day <= 31; day += 1) {
@@ -248,8 +255,11 @@ export function addClassMap(
       }
       cursor += 1;
     }
-    sheet.getRow(cursor).height = 8;
-    cursor += 1;
+    // Evita dezenas de separadores sem conteúdo nas classes inativas.
+    if (usedTypes.length > 0) {
+      sheet.getRow(cursor).height = 7;
+      cursor += 1;
+    }
   }
 
   const footerRow = cursor + 1;
@@ -264,8 +274,8 @@ export function addClassMap(
 
   sheet.mergeCells(footerRow + 1, 1, footerRow + 1, 33);
   sheet.getCell(footerRow + 1, 1).value =
-    '1 = classe ativa nesse dia; nas sublinhas, o número indica atividades do mesmo tipo; × = apenas canceladas. ' +
-    'Sublinhas podem sobrepor-se: não somar os seus totais para obter dias-classe.';
+    '1 = classe ativa nesse dia; as sublinhas aparecem apenas quando o tipo tem atividades no mês; × = apenas canceladas. ' +
+    'Os totais por tipo podem sobrepor-se e não devem ser somados para obter dias-classe.';
   sheet.getCell(footerRow + 1, 1).font = { name: 'Aptos', italic: true, size: 10,
     color: hex(dark) };
   sheet.getRow(footerRow + 1).height = 22;
