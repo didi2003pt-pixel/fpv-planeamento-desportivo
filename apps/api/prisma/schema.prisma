@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  COORDINATOR
+  COACH
+  VIEWER
+}
+
+enum ActivityType {
+  TRAINING
+  CAMP
+  COMPETITION
+  TRAVEL
+  EDUCATION
+  OTHER
+}
+
+enum ActivityStatus {
+  PLANNED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PlanningStage {
+  ANNUAL
+  MONTHLY
+}
+
+enum ParticipantStatus {
+  EXPECTED
+  CONFIRMED
+  DECLINED
+  ATTENDED
+}
+
+model User {
+  id                String           @id @default(uuid()) @db.Uuid
+  fullName          String           @db.VarChar(160)
+  email             String           @unique @db.VarChar(255)
+  passwordHash      String           @db.VarChar(255)
+  role              UserRole         @default(COACH)
+  active            Boolean          @default(true)
+  coachClasses      CoachClass[]
+  leadingActivities Activity[]       @relation("LeadCoach")
+  createdActivities Activity[]       @relation("ActivityCreator")
+  changes           ActivityChange[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("users")
+}
+
+model SailingClass {
+  id         String       @id @default(uuid()) @db.Uuid
+  code       String       @unique @db.VarChar(40)
+  name       String       @db.VarChar(120)
+  active     Boolean      @default(true)
+  coaches    CoachClass[]
+  activities Activity[]
+
+  @@map("sailing_classes")
+}
+
+model CoachClass {
+  userId         String       @db.Uuid
+  sailingClassId String       @db.Uuid
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sailingClass   SailingClass @relation(fields: [sailingClassId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sailingClassId])
+  @@map("coach_classes")
+}
+
+model Athlete {
+  id            String                @id @default(uuid()) @db.Uuid
+  fullName      String                @db.VarChar(160)
+  active        Boolean               @default(true)
+  participants  ActivityParticipant[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@map("athletes")
+}
+
+model Activity {
+  id                   String                @id @default(uuid()) @db.Uuid
+  title                String                @db.VarChar(200)
+  details              String?               @db.Text
+  type                 ActivityType
+  status               ActivityStatus        @default(PLANNED)
+  planningStage        PlanningStage         @default(ANNUAL)
+  startDate            DateTime              @db.Date
+  endDate              DateTime              @db.Date
+  location             String?               @db.VarChar(200)
+  expectedAthleteCount Int?
+  sailingClassId       String                @db.Uuid
+  sailingClass         SailingClass          @relation(fields: [sailingClassId], references: [id])
+  leadCoachId          String                @db.Uuid
+  leadCoach            User                  @relation("LeadCoach", fields: [leadCoachId], references: [id])
+  createdById          String                @db.Uuid
+  createdBy            User                  @relation("ActivityCreator", fields: [createdById], references: [id])
+  participants         ActivityParticipant[]
+  execution            ActivityExecution?
+  changes              ActivityChange[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([startDate, endDate])
+  @@index([sailingClassId, startDate])
+  @@map("activities")
+}
+
+model ActivityParticipant {
+  activityId String            @db.Uuid
+  athleteId  String            @db.Uuid
+  status     ParticipantStatus @default(EXPECTED)
+  activity   Activity          @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  athlete    Athlete           @relation(fields: [athleteId], references: [id])
+
+  @@id([activityId, athleteId])
+  @@map("activity_participants")
+}
+
+model ActivityExecution {
+  activityId      String    @id @db.Uuid
+  activity        Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  actualStartDate DateTime? @db.Date
+  actualEndDate   DateTime? @db.Date
+  actualLocation  String?   @db.VarChar(200)
+  notes           String?   @db.Text
+  updatedAt       DateTime  @updatedAt
+
+  @@map("activity_executions")
+}
+
+model ActivityChange {
+  id         String   @id @default(uuid()) @db.Uuid
+  activityId String   @db.Uuid
+  actorId    String   @db.Uuid
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  actor      User     @relation(fields: [actorId], references: [id])
+  before     Json?
+  after      Json?
+  reason     String?  @db.VarChar(300)
+  createdAt  DateTime @default(now())
+
+  @@index([activityId, createdAt])
+  @@map("activity_changes")
+}
