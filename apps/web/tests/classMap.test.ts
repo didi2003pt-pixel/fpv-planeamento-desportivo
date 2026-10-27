@@ -70,7 +70,12 @@ test('Classes sem atividades mantêm resumo, mas não criam três sublinhas vazi
   assert.equal(map.getCell('A10').value, 'ILCA 6');
   assert.equal(map.getCell('B10').value, 0);
   assert.equal(map.getCell('A11').value, '470 MX');
-  const classNames = Array.from({ length: map.rowCount }, (_, index) =>
+  // Contar apenas o bloco principal, não repetir classes que surgem
+  // legitimamente na tabela descritiva de provas e estágios.
+  const summaryRow = Array.from({ length: map.rowCount }, (_, index) => index + 1)
+    .find((row) => String(map.getCell(row, 1).value).startsWith('RESUMO  ·'));
+  assert.ok(summaryRow);
+  const classNames = Array.from({ length: summaryRow - 1 }, (_, index) =>
     map.getCell(index + 1, 1).value).filter((value) =>
       typeof value === 'string' && fpvReferenceClasses.includes(value as typeof fpvReferenceClasses[number]));
   assert.equal(classNames.length, fpvReferenceClasses.length);
