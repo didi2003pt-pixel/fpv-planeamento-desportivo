@@ -70,3 +70,15 @@ No GitHub Pages, o botão **Nova atividade** (ou um clique num dia do calendári
 Validação automática: título obrigatório, classe existente, datas válidas e ordenadas, número previsto inteiro não negativo, máximo de 200 atletas, não permitir mais nomes do que previstos nem nomes duplicados. Testes: `cd apps/web && npm run test:form`.
 
 Não se alterou a estrutura do Excel: as novas atividades entram no **Mapa Classes**, na lista de **Atividades** e no calendário visual já aprovado.
+
+## INC-008 — edição e cancelamento na demonstração
+
+A partir do painel **Detalhes da atividade**, depois de clicar num evento no calendário:
+- **Editar atividade**: alterar nome, classe, tipo, datas, local, estado, atletas previstos e nomes fictícios. O identificador e o treinador da atividade permanecem iguais.
+- **Cancelar atividade**: pede confirmação, preserva os dados e altera o estado para cancelado. O mapa Excel assinala o cancelamento em vez de contabilizar os dias como ativos.
+- **Reativar como previsto**: faz a operação inversa, atribuindo o estado **Previsto** (não recupera automaticamente o anterior estado Confirmado).
+- Alterações refletem-se no calendário, filtros, detalhe e exportação Excel **da sessão atual**. A apresentação das 3 folhas do Excel aprovado não foi alterada.
+
+**Limitação:** GitHub Pages é estático. Edições, cancelamentos e reativações são efémeros, sem conta, sem auditoria e sem persistência; tudo volta aos dados fictícios iniciais após recarregar a página. Não utilizar dados pessoais reais nem disponibilizar o sistema como ferramenta oficial de planeamento até existir backend autenticado e autorização por classe.
+
+Validação de regras e integração: `cd apps/web && npm run test:form`.

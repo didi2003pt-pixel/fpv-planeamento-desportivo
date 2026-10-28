@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { fpvReferenceClasses } from './exportClassMap';
 import {
-  createDemoActivity, initialActivityDraft, parseParticipants, validateActivityDraft,
+  activityToDraft, createDemoActivity, editDemoActivity, initialActivityDraft,
+  parseParticipants, validateActivityDraft,
   type ActivityDraft,
 } from './activityDraft';
 import { statusLabel, typeMeta, type ActivityStatus, type ActivityType, type DemoActivity } from './demo';
 
 interface Props {
   startDate: string;
-  onCreate: (activity: DemoActivity) => void;
+  activity?: DemoActivity;
+  onSave: (activity: DemoActivity) => void;
   onClose: () => void;
 }
 
-export default function CreateActivityDialog({ startDate, onCreate, onClose }: Props) {
+export default function CreateActivityDialog({ startDate, activity, onSave, onClose }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [draft, setDraft] = useState<ActivityDraft>(() => initialActivityDraft(startDate));
+  const [draft, setDraft] = useState<ActivityDraft>(() => activity ? activityToDraft(activity) : initialActivityDraft(startDate));
   const [error, setError] = useState<string | null>(null);
   const count = parseParticipants(draft.participantLines).length;
 
@@ -36,9 +38,12 @@ export default function CreateActivityDialog({ startDate, onCreate, onClose }: P
       setError(validationError);
       return;
     }
-    // ID exclusivamente local para demonstração, não serve de identificador de produção.
-    const newId = 'demo-' + crypto.randomUUID();
-    onCreate(createDemoActivity(draft, newId));
+    if (activity) {
+      onSave(editDemoActivity(activity, draft));
+    } else {
+      // ID exclusivamente local para demonstração, não serve de identificador de produção.
+      onSave(createDemoActivity(draft, 'demo-' + crypto.randomUUID()));
+    }
   }
 
   return (
@@ -46,14 +51,14 @@ export default function CreateActivityDialog({ startDate, onCreate, onClose }: P
       <div className="modal-heading">
         <div>
           <span className="modal-eyebrow">FPV · DEMONSTRAÇÃO</span>
-          <h2 id="activity-dialog-title">Nova atividade</h2>
-          <p>Experimenta o registo de um planeamento com dados inventados.</p>
+          <h2 id="activity-dialog-title">{activity ? 'Editar atividade' : 'Nova atividade'}</h2>
+          <p>{activity ? 'Atualiza datas, tipo, local, estado e atletas de demonstração.' : 'Experimenta o registo de um planeamento com dados inventados.'}</p>
         </div>
         <button type="button" className="modal-close" aria-label="Fechar formulário" onClick={onClose}>×</button>
       </div>
       <div className="modal-warning" role="note">
         Este protótipo é público e não tem login. <strong>Não introduzas nomes nem dados pessoais reais.</strong>
-        A atividade é temporária: desaparece ao atualizar ou fechar a página.
+        As alterações são temporárias: desaparecem ao atualizar ou fechar a página.
       </div>
       <form onSubmit={submit} className="activity-form" noValidate>
         <label className="form-field form-wide">Título da atividade *
@@ -84,7 +89,8 @@ export default function CreateActivityDialog({ startDate, onCreate, onClose }: P
         <label className="form-field">Estado *
           <select value={draft.status}
             onChange={(e) => update('status', e.target.value as ActivityStatus)}>
-            {(['PLANNED', 'CONFIRMED'] as ActivityStatus[]).map((item) =>
+            {(activity ? ['PLANNED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'] as ActivityStatus[]
+              : ['PLANNED', 'CONFIRMED'] as ActivityStatus[]).map((item) =>
               <option key={item} value={item}>{statusLabel[item]}</option>)}
           </select>
         </label>
@@ -111,7 +117,7 @@ export default function CreateActivityDialog({ startDate, onCreate, onClose }: P
         {error && <div className="form-error" role="alert">{error}</div>}
         <div className="form-actions">
           <button type="button" className="form-cancel" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="form-primary">+ Adicionar ao calendário</button>
+          <button type="submit" className="form-primary">{activity ? 'Guardar alterações' : '+ Adicionar ao calendário'}</button>
         </div>
       </form>
     </dialog>

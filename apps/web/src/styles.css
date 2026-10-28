@@ -39,3 +39,14 @@
 .form-primary:hover{background:#126974}
 @media(max-width:740px){.welcome-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.welcome-actions button{width:100%;white-space:normal;justify-content:center;font-size:12px;padding:11px 9px}.activity-modal{width:calc(100vw - 16px);max-height:94dvh;border-radius:12px}.modal-heading{padding:20px 17px 12px}.modal-heading h2{font-size:21px}.modal-warning{margin:0 17px}.activity-form{padding:18px 17px 22px;gap:14px 10px}.form-athletes{grid-template-columns:1fr 1fr;gap:10px}.form-actions button{padding:11px 12px}.form-field input,.form-field select{font-size:16px}}
 @media(max-width:430px){.activity-form{grid-template-columns:1fr}.form-field{grid-column:1/-1}.form-athletes{grid-template-columns:1fr}.modal-heading p{max-width:270px}.form-actions{justify-content:stretch}.form-actions button{flex:1}}
+
+/* INC-008 — ações no painel de atividades */
+.detail-actions{display:flex;flex-direction:column;gap:9px;margin-top:24px;padding-top:18px;border-top:1px solid #eef2f7}
+.detail-actions button{border-radius:8px;font-size:12px;font-weight:750;min-height:39px;padding:10px 11px;text-align:center;transition:background .15s ease,border-color .15s ease}
+.detail-edit{color:#fff;border:1px solid #176b9b;background:#1d70a7}
+.detail-edit:hover{background:#145a89}
+.detail-cancel{color:#a44343;background:#fff7f7;border:1px solid #ebc9c9}
+.detail-cancel:hover{background:#ffeded}
+.detail-restore{color:#176451;background:#edfaf5;border:1px solid #b6e0d0}
+.detail-restore:hover{background:#def6eb}
+.detail-actions button:focus-visible{outline:3px solid #78b3dc;outline-offset:2px}
