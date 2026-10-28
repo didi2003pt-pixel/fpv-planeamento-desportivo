@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="pt">
+  <head><meta charset="UTF-8"><title>FPV — Autenticação Microsoft</title></head>
+  <body>
+    <p>A concluir autenticação Microsoft…</p>
+    <script type="module">
+      import { broadcastResponseToMainFrame } from '@azure/msal-browser/redirect-bridge';
+      broadcastResponseToMainFrame().catch(() => {
+        document.querySelector('p').textContent = 'Não foi possível concluir o login. Fecha esta janela e tenta novamente.';
+      });
+    </script>
+  </body>
+</html>

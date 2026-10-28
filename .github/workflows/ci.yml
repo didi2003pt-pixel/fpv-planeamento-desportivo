@@ -56,6 +56,8 @@ jobs:
         run: npm run test:monthly
       - name: Testar cliente API da área privada
         run: npm run test:private
+      - name: Testar ligação Microsoft Graph sem dados reais
+        run: npm run test:m365
       - name: Verificar TypeScript e compilar interface
         run: npm run build
       - name: Verificar build estático do GitHub Pages
