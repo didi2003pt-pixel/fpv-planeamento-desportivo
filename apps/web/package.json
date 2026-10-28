@@ -11,7 +11,8 @@
     "test:form": "tsx --test tests/activityDraft.test.ts",
     "test:coaches": "tsx --test tests/demoCoaches.test.ts",
     "test:calendar": "tsx --test tests/calendarPeriod.test.ts",
-    "test:monthly": "tsx --test tests/monthlyPlan.test.ts"
+    "test:monthly": "tsx --test tests/monthlyPlan.test.ts",
+    "test:private": "tsx --test tests/privateApi.test.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "6.1.19",
