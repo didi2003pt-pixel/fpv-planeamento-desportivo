@@ -49,6 +49,7 @@ model User {
   passwordHash      String           @db.VarChar(255)
   role              UserRole         @default(COACH)
   active            Boolean          @default(true)
+  authzVersion      Int              @default(0)
   sessions          AuthSession[]
   coachClasses      CoachClass[]
   leadingActivities Activity[]       @relation("LeadCoach")
