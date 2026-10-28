@@ -12,6 +12,12 @@ import {
 import { exportDemoExcel } from './exportExcel';
 import { fpvReferenceClasses } from './exportClassMap';
 import CreateActivityDialog from './CreateActivityDialog';
+import DemoCoachManager from './DemoCoachManager';
+import {
+  FEDERATION_VIEW, activitiesForDemoView, appendFictitiousCoach,
+  assignDemoCoachClasses, classesForDemoView, demoCoachNameForClass,
+  initialDemoCoaches, type DemoCoach,
+} from './demoCoaches';
 import { changeDemoActivityStatus } from './activityDraft';
 
 const sailingClasses = [...fpvReferenceClasses];
@@ -76,7 +82,15 @@ function ActivityDetail({
 
 function App() {
   const calendarRef = useRef<FullCalendar>(null);
-  const [allActivities, setAllActivities] = useState<DemoActivity[]>(() => demoActivities());
+  const [coaches, setCoaches] = useState<DemoCoach[]>(initialDemoCoaches);
+  const [viewId, setViewId] = useState(FEDERATION_VIEW);
+  const [showCoachManager, setShowCoachManager] = useState(false);
+  const [allActivities, setAllActivities] = useState<DemoActivity[]>(() => {
+    const initial = initialDemoCoaches();
+    return demoActivities().map((activity) => ({
+      ...activity, coach: demoCoachNameForClass(initial, activity.sailingClass),
+    }));
+  });
   const [creatingFor, setCreatingFor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
@@ -98,10 +112,14 @@ function App() {
     return () => controller.abort();
   }, []);
 
-  const filtered = useMemo(() => allActivities.filter((a) =>
-    (selectedClass === 'ALL' || a.sailingClass === selectedClass) &&
-    (selectedType === 'ALL' || a.type === selectedType),
-  ), [allActivities, selectedClass, selectedType]);
+  const allowedClasses = useMemo(() =>
+    classesForDemoView(viewId, coaches), [viewId, coaches]);
+  const activeCoach = coaches.find((coach) => coach.id === viewId);
+  const filtered = useMemo(() =>
+    activitiesForDemoView(allActivities, viewId, coaches).filter((activity) =>
+      (selectedClass === 'ALL' || activity.sailingClass === selectedClass)
+      && (selectedType === 'ALL' || activity.type === selectedType)),
+    [allActivities, viewId, coaches, selectedClass, selectedType]);
 
   const entries: EventInput[] = useMemo(() => filtered.map((a) => ({
     id: a.id,
@@ -119,7 +137,9 @@ function App() {
   const editingActivity = editingId ? allActivities.find((a) => a.id === editingId) : undefined;
 
   function addActivity(activity: DemoActivity) {
-    setAllActivities((current) => [...current, activity]);
+    if (allowedClasses !== null && !allowedClasses.includes(activity.sailingClass)) return;
+    const owner = activeCoach?.name ?? demoCoachNameForClass(coaches, activity.sailingClass);
+    setAllActivities((current) => [...current, { ...activity, coach: owner }]);
     setSelectedClass('ALL');
     setSelectedType('ALL');
     setSelectedId(activity.id);
@@ -129,6 +149,7 @@ function App() {
   }
 
   function saveEditedActivity(activity: DemoActivity) {
+    if (allowedClasses !== null && !allowedClasses.includes(activity.sailingClass)) return;
     setAllActivities((current) => current.map((item) => item.id === activity.id ? activity : item));
     setSelectedClass('ALL');
     setSelectedType('ALL');
@@ -139,6 +160,7 @@ function App() {
   }
 
   function toggleCancelled(activity: DemoActivity) {
+    if (allowedClasses !== null && !allowedClasses.includes(activity.sailingClass)) return;
     const cancelled = activity.status === 'CANCELLED';
     if (!cancelled && !window.confirm(
       'Cancelar "' + activity.title + '"? A atividade ficará assinalada como cancelada no calendário e no Excel desta sessão.',
@@ -149,6 +171,16 @@ function App() {
     setNotice(cancelled
       ? 'Atividade reativada como prevista nesta sessão (não confirmada).'
       : 'Atividade cancelada nesta sessão. Não foi eliminada e mantém os seus dados.');
+  }
+
+  function chooseDemoView(nextId: string) {
+    setViewId(nextId);
+    setSelectedClass('ALL');
+    setSelectedType('ALL');
+    setSelectedId('');
+    setNotice(nextId === FEDERATION_VIEW
+      ? 'Vista geral da Federação: todas as classes, apenas nesta simulação.'
+      : 'Vista de treinador simulada: apenas classes atribuídas. Isto não é um login nem uma proteção de dados.');
   }
 
   function changeView(view: string) {
@@ -201,7 +233,12 @@ function App() {
         <div className="nav-active"><span>▦</span> Calendário geral</div>
         <div className="nav-section-title muted-nav-title">EM PREPARAÇÃO</div>
         <div className="nav-inactive"><span>◫</span> Gestão de atividades</div>
-        <div className="nav-inactive"><span>♙</span> Treinadores e classes</div>
+        <button type="button" className="nav-inactive nav-action"
+          disabled={viewId !== FEDERATION_VIEW}
+          title={viewId !== FEDERATION_VIEW ? 'Escolhe a vista Federação para gerir as atribuições da demonstração.' : ''}
+          onClick={() => setShowCoachManager(true)}>
+          <span>♙</span> Treinadores e classes
+        </button>
         <div className="nav-inactive"><span>♧</span> Atletas</div>
         <div className="nav-inactive"><span>▤</span> Relatórios</div>
         <div className="sidebar-bottom">
@@ -216,6 +253,13 @@ function App() {
         <header className="topbar">
           <div className="breadcrumbs">Plataforma <span>/</span> <strong>Calendário</strong></div>
           <div className="topbar-right">
+            <label className="demo-view-select">
+              <span>Vista (simulação)</span>
+              <select value={viewId} onChange={(event) => chooseDemoView(event.target.value)}>
+                <option value={FEDERATION_VIEW}>Federação — todas</option>
+                {coaches.map((coach) => <option key={coach.id} value={coach.id}>{coach.name}</option>)}
+              </select>
+            </label>
             <span className={'connection-pill ' + apiStatus}><span className="status-light" />
               {apiStatus === 'demo' ? 'Demonstração online' : apiStatus === 'online' ? 'API ligada' : apiStatus === 'offline' ? 'API desligada' : 'A verificar API'}
             </span>
@@ -232,6 +276,8 @@ function App() {
             </div>
             <div className="welcome-actions">
               <button type="button" className="create-button"
+                disabled={allowedClasses !== null && allowedClasses.length === 0}
+                title={allowedClasses !== null && allowedClasses.length === 0 ? 'Sem classes atribuídas nesta vista de exemplo.' : ''}
                 onClick={() => { setNotice(''); setCreatingFor(formatISO(calendarRef.current?.getApi().getDate() ?? new Date())); }}>
                 <span aria-hidden="true">＋</span> Nova atividade
               </button>
@@ -241,7 +287,7 @@ function App() {
             </div>
           </div>
 
-          <div className="disclaimer"><strong>Modo de demonstração pública:</strong> os exemplos iniciais são fictícios. Não introduzas nomes nem dados pessoais reais. Criações, edições e cancelamentos existem apenas nesta página enquanto estiver aberta; perdem-se ao atualizar.</div>
+          <div className="disclaimer"><strong>Simulação pública, sem login:</strong> as vistas por treinador são apenas filtros visuais, não permissões de acesso. Não introduzas dados reais. Atribuições e atividades desaparecem ao atualizar a página.</div>
           {notice && <div className="create-notice" role="status">{notice}</div>}
 
           <div className="stats-grid">
@@ -262,7 +308,8 @@ function App() {
                 <label className="filter-field"><span>Classe</span>
                   <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
                     <option value="ALL">Todas as classes</option>
-                    {sailingClasses.map((c) => <option key={c} value={c}>{c}</option>)}
+                    {sailingClasses.filter((c) => allowedClasses === null || allowedClasses.includes(c)).map((c) =>
+                      <option key={c} value={c}>{c}</option>)}
                   </select>
                 </label>
                 <label className="filter-field"><span>Atividade</span>
@@ -300,7 +347,10 @@ function App() {
                   displayEventTime={false}
                   events={entries}
                   eventClick={(info) => setSelectedId(info.event.id)}
-                  dateClick={(info) => { setNotice(''); setCreatingFor(info.dateStr); }}
+                  dateClick={(info) => {
+                    if (allowedClasses !== null && allowedClasses.length === 0) return;
+                    setNotice(''); setCreatingFor(info.dateStr);
+                  }}
                   datesSet={(info) => { setCalendarTitle(info.view.title); setViewType(info.view.type); }}
                 />
               </div>
@@ -319,10 +369,23 @@ function App() {
           </section>
           <footer>FPV Planeamento Desportivo · Protótipo de avaliação · Não utilizar para dados reais.</footer>
           {creatingFor && <CreateActivityDialog key="new" startDate={creatingFor}
+            allowedClasses={allowedClasses ?? undefined}
             onSave={addActivity} onClose={() => setCreatingFor(null)} />}
           {editingActivity && <CreateActivityDialog key={editingActivity.id}
             startDate={editingActivity.start} activity={editingActivity}
+            allowedClasses={allowedClasses ?? undefined}
             onSave={saveEditedActivity} onClose={() => setEditingId(null)} />}
+          {showCoachManager && viewId === FEDERATION_VIEW && (
+            <DemoCoachManager coaches={coaches}
+              onSave={(id, classes) => {
+                setCoaches((current) => assignDemoCoachClasses(current, id, classes));
+                setNotice('Associação de classes atualizada apenas nesta demonstração.');
+              }}
+              onAddExample={() => {
+                setCoaches((current) => appendFictitiousCoach(current));
+              }}
+              onClose={() => setShowCoachManager(false)} />
+          )}
         </main>
       </div>
     </div>
