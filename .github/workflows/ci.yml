@@ -40,6 +40,8 @@ jobs:
         run: npm run test:mapa
       - name: Testar criação de atividades e participantes
         run: npm run test:form
+      - name: Testar vistas fictícias de treinadores e classes
+        run: npm run test:coaches
       - name: Verificar TypeScript e compilar interface
         run: npm run build
       - name: Verificar build estático do GitHub Pages
