@@ -20,6 +20,8 @@ import {
 } from './demoCoaches';
 import { changeDemoActivityStatus } from './activityDraft';
 import { activitiesInPeriod, civilDate, periodFromMonth } from './calendarPeriod';
+import { annualPlanDates, monthlyDatesDiffer } from './monthlyPlan';
+import ConfirmMonthlyDialog from './ConfirmMonthlyDialog';
 
 const sailingClasses = [...fpvReferenceClasses];
 const dateFormatter = new Intl.DateTimeFormat('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -30,16 +32,19 @@ function prettyDate(iso: string): string {
 }
 
 function ActivityDetail({
-  activity, onEdit, onToggleCancelled,
+  activity, onEdit, onToggleCancelled, onConfirmMonthly,
 }: {
   activity: DemoActivity | undefined;
   onEdit: (activity: DemoActivity) => void;
   onToggleCancelled: (activity: DemoActivity) => void;
+  onConfirmMonthly: (activity: DemoActivity) => void;
 }) {
   if (!activity) {
     return <div className="empty-detail">Seleciona uma atividade no calendário para ver os detalhes.</div>;
   }
   const meta = typeMeta[activity.type];
+  const annual = annualPlanDates(activity);
+  const changed = monthlyDatesDiffer(activity);
   return (
     <section className="activity-detail">
       <div className="detail-topline">
@@ -55,6 +60,20 @@ function ActivityDetail({
         <div><span className="detail-label">Responsável</span><strong>{activity.coach}</strong></div>
       </div>
       <div className="detail-divider" />
+      <div className="monthly-summary">
+        <div className="monthly-summary-header">
+          <strong>Planeamento anual / mensal</strong>
+          <span className={activity.monthlyConfirmed ? 'monthly-status done' : 'monthly-status'}>
+            {activity.monthlyConfirmed ? 'Mês confirmado' : 'Por confirmar'}
+          </span>
+        </div>
+        <div><span>Previsão anual</span><strong>{prettyDate(annual.start)} — {prettyDate(annual.end)}</strong></div>
+        <div><span>Datas atuais</span><strong>{prettyDate(activity.start)} — {prettyDate(activity.end)}</strong></div>
+        {activity.monthlyConfirmed && <p>
+          {changed ? 'As datas foram revistas face ao plano anual.' : 'Confirmado sem alterar as datas previstas.'}
+        </p>}
+      </div>
+      <div className="detail-divider" />
       <div className="athlete-heading">
         <div><span className="detail-label">Atletas previstos</span><strong className="athlete-number">{activity.expectedAthletes}</strong></div>
         <div><span className="detail-label">Nomes indicados</span><strong className="athlete-number">{activity.participants.length}</strong></div>
@@ -67,6 +86,11 @@ function ActivityDetail({
       {activity.expectedAthletes > activity.participants.length &&
         <p className="subtle-note">Faltam indicar {activity.expectedAthletes - activity.participants.length} nomes previstos.</p>}
       <div className="detail-actions">
+        <button type="button" className="detail-monthly"
+          disabled={activity.status === 'CANCELLED' || activity.status === 'COMPLETED'}
+          onClick={() => onConfirmMonthly(activity)}>
+          {activity.monthlyConfirmed ? 'Rever plano mensal' : 'Confirmar plano mensal'}
+        </button>
         <button type="button" className="detail-edit" onClick={() => onEdit(activity)}>
           Editar atividade
         </button>
@@ -94,6 +118,7 @@ function App() {
   });
   const [creatingFor, setCreatingFor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [monthlyId, setMonthlyId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const [selectedClass, setSelectedClass] = useState('ALL');
   const [selectedType, setSelectedType] = useState('ALL');
@@ -139,6 +164,7 @@ function App() {
   const selected = visibleActivities.find((a) => a.id === selectedId) ?? visibleActivities[0];
   const currentClasses = new Set(visibleActivities.map((a) => a.sailingClass)).size;
   const editingActivity = editingId ? allActivities.find((a) => a.id === editingId) : undefined;
+  const monthlyActivity = monthlyId ? allActivities.find((a) => a.id === monthlyId) : undefined;
 
   function addActivity(activity: DemoActivity) {
     if (allowedClasses !== null && !allowedClasses.includes(activity.sailingClass)) return;
@@ -161,6 +187,15 @@ function App() {
     calendarRef.current?.getApi().gotoDate(activity.start);
     setEditingId(null);
     setNotice('Alterações aplicadas nesta sessão: calendário e Excel atualizados. Não ficam guardadas online.');
+  }
+
+  function saveMonthlyPlan(activity: DemoActivity) {
+    if (allowedClasses !== null && !allowedClasses.includes(activity.sailingClass)) return;
+    setAllActivities((current) => current.map((item) => item.id === activity.id ? activity : item));
+    setSelectedId(activity.id);
+    calendarRef.current?.getApi().gotoDate(activity.start);
+    setMonthlyId(null);
+    setNotice('Plano mensal confirmado nesta sessão. O calendário e o Excel usam as datas revistas; o plano anual foi preservado.');
   }
 
   function toggleCancelled(activity: DemoActivity) {
@@ -378,7 +413,13 @@ function App() {
               <div className="detail-title"><h2>Detalhes da atividade</h2><span>◉</span></div>
               <ActivityDetail activity={selected}
                 onEdit={(activity) => { setNotice(''); setCreatingFor(null); setEditingId(activity.id); }}
-                onToggleCancelled={toggleCancelled} />
+                onToggleCancelled={toggleCancelled}
+                onConfirmMonthly={(activity) => {
+                  setNotice('');
+                  setEditingId(null);
+                  setCreatingFor(null);
+                  setMonthlyId(activity.id);
+                }} />
             </aside>
           </section>
           <footer>FPV Planeamento Desportivo · Protótipo de avaliação · Não utilizar para dados reais.</footer>
@@ -389,6 +430,9 @@ function App() {
             startDate={editingActivity.start} activity={editingActivity}
             allowedClasses={allowedClasses ?? undefined}
             onSave={saveEditedActivity} onClose={() => setEditingId(null)} />}
+          {monthlyActivity && <ConfirmMonthlyDialog key={monthlyActivity.id}
+            activity={monthlyActivity} onSave={saveMonthlyPlan}
+            onClose={() => setMonthlyId(null)} />}
           {showCoachManager && viewId === FEDERATION_VIEW && (
             <DemoCoachManager coaches={coaches}
               onSave={(id, classes) => {

@@ -104,3 +104,17 @@ Após revisão da gravação `teste 12.mp4`, verificou-se que, nos meses sem ati
 **Não foi alterado nenhum ficheiro da exportação Excel**, nem a estrutura das três folhas já aprovadas. Os dados continuam fictícios, apenas em memória.
 
 Teste: `cd apps/web && npm run test:calendar`.
+
+## INC-011 — confirmação do planeamento mensal (simulação)
+
+- Cada atividade tem uma previsão anual inicial, guardada separadamente das datas atuais.
+- Em **Detalhes da atividade**, selecionar **Confirmar plano mensal** para rever as datas. Exemplo: planeado de 17 a 31, confirmado de 17 a 27.
+- O painel apresenta **Previsão anual** e **Datas atuais**, assinalando se houve alteração e se o mês foi confirmado.
+- A confirmação atualiza o calendário e os dados enviados para a exportação Excel, mas **não altera as três folhas nem o seu desenho**.
+- É possível rever uma confirmação mensal; a previsão anual continua preservada.
+- Não é possível confirmar mensalmente atividades canceladas ou já realizadas.
+- A confirmação é independente da aprovação institucional e não representa execução realizada.
+
+**Limite:** nesta demonstração GitHub Pages, nada é persistido ou autenticado e não existe aprovação real da Federação. Utilizar apenas dados fictícios; tudo desaparece ao atualizar a página.
+
+Teste: `cd apps/web && npm run test:monthly`.
