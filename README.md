@@ -118,3 +118,7 @@ Teste: `cd apps/web && npm run test:calendar`.
 **Limite:** nesta demonstração GitHub Pages, nada é persistido ou autenticado e não existe aprovação real da Federação. Utilizar apenas dados fictícios; tudo desaparece ao atualizar a página.
 
 Teste: `cd apps/web && npm run test:monthly`.
+
+## INC-012 — PostgreSQL e sessões no backend
+
+A primeira infraestrutura privada de acessos foi preparada: esquema e migrações PostgreSQL, ligação Prisma, login e logout com sessão revogável, e recuperação de perfil. **Não existe ainda login real no GitHub Pages nem gravação de atividades pelo frontend**. Os detalhes técnicos, teste e limites encontram-se em [Acessos e persistência](docs/ACESSOS_E_PERSISTENCIA.md). Nenhum ficheiro gerador do Excel foi alterado.

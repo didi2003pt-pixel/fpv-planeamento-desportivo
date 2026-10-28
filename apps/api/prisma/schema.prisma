@@ -49,6 +49,7 @@ model User {
   passwordHash      String           @db.VarChar(255)
   role              UserRole         @default(COACH)
   active            Boolean          @default(true)
+  sessions          AuthSession[]
   coachClasses      CoachClass[]
   leadingActivities Activity[]       @relation("LeadCoach")
   createdActivities Activity[]       @relation("ActivityCreator")
@@ -155,4 +156,18 @@ model ActivityChange {
 
   @@index([activityId, createdAt])
   @@map("activity_changes")
+}
+
+
+model AuthSession {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique @db.Char(64)
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+  @@map("auth_sessions")
 }

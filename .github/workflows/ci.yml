@@ -21,8 +21,12 @@ jobs:
         env:
           DATABASE_URL: postgresql://fpv:local@localhost:5432/fpv_planeamento?schema=public
         run: npm run prisma:validate
+      - name: Gerar cliente Prisma
+        run: npm run prisma:generate
       - name: Compilar API
         run: npm run build
+      - name: Testar hashes de password e sessões
+        run: npm run test:auth
 
   build-web:
     runs-on: ubuntu-latest
@@ -56,6 +60,7 @@ jobs:
     env:
       POSTGRES_PASSWORD: ci_test_password_123
       APP_PORT: '8080'
+      SESSION_COOKIE_SECURE: 'false'
     steps:
       - uses: actions/checkout@v4
       - name: Construir e iniciar containers
@@ -72,6 +77,23 @@ jobs:
           done
           echo "Health check não respondeu a tempo"
           exit 1
+      - name: Testar migração PostgreSQL e sessão protegida
+        shell: bash
+        run: |
+          docker compose exec -T db psql -U fpv -d fpv_planeamento -tAc "SELECT to_regclass('public.auth_sessions') IS NOT NULL" | grep -qx t
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:8080/api/auth/me)" = "401"
+          docker compose exec -T -e FPV_LOCAL_BOOTSTRAP=1 -e FPV_INITIAL_ADMIN_EMAIL=admin@fpv.invalid -e FPV_INITIAL_ADMIN_PASSWORD='TesteSomenteNoCI_2026#Fortissima' api node dist/bootstrap-admin.js
+          curl --fail --silent --show-error -c /tmp/fpv-session.txt \
+            -H 'Content-Type: application/json' \
+            --data '{"email":"admin@fpv.invalid","password":"TesteSomenteNoCI_2026#Fortissima"}' \
+            http://localhost:8080/api/auth/login | grep -q '"role":"ADMIN"'
+          curl --fail --silent --show-error -b /tmp/fpv-session.txt \
+            http://localhost:8080/api/auth/me | grep -q '"role":"ADMIN"'
+          curl --fail --silent --show-error -b /tmp/fpv-session.txt \
+            -H 'Content-Type: application/json' --data '{}' \
+            http://localhost:8080/api/auth/logout | grep -q '"signed_out"'
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -b /tmp/fpv-session.txt http://localhost:8080/api/auth/me)" = "401"
+          rm -f /tmp/fpv-session.txt
       - name: Mostrar diagnóstico em caso de falha
         if: failure()
         run: |
