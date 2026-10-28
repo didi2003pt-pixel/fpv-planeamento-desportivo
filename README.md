@@ -122,3 +122,7 @@ Teste: `cd apps/web && npm run test:monthly`.
 ## INC-012 — PostgreSQL e sessões no backend
 
 A primeira infraestrutura privada de acessos foi preparada: esquema e migrações PostgreSQL, ligação Prisma, login e logout com sessão revogável, e recuperação de perfil. **Não existe ainda login real no GitHub Pages nem gravação de atividades pelo frontend**. Os detalhes técnicos, teste e limites encontram-se em [Acessos e persistência](docs/ACESSOS_E_PERSISTENCIA.md). Nenhum ficheiro gerador do Excel foi alterado.
+
+## INC-013 — atividades persistentes com permissões na API
+
+O backend privado tem agora endpoints de consulta, criação, edição e confirmação mensal de atividades gravadas no PostgreSQL com autorização por classe, auditoria e proteção contra gravações desatualizadas. **O GitHub Pages mantém a demonstração pública com dados fictícios e não usa estes endpoints.** O Excel de referência não foi modificado. Ver [API de atividades](docs/API_ATIVIDADES.md) para rotas, testes e precauções.
