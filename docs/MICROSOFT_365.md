@@ -1,5 +1,40 @@
 # INC-016 — Integração Microsoft 365 sem Docker obrigatório
 
+## INC-017 — Funcionamento sem Entra: Power Apps + vistas de calendário SharePoint
+
+**Situação demonstrada no piloto:** a conta de teste criou/alterou um estágio na aplicação Power Apps ligada à lista SharePoint, e o registo ficou visível na lista. A gravação feita em modo editar atualiza o mesmo item; não duplica a atividade. O histórico de versões da lista foi configurado para registar alterações.
+
+**Não bloquear o piloto por falta de permissões no portal Microsoft Entra.** O Power Apps pode utilizar a ligação SharePoint da própria organização para ler e escrever na lista, respeitando os acessos do utilizador. A app React no GitHub Pages continua a ser **demonstração isolada**, e **não** lê automaticamente os itens do SharePoint enquanto faltarem os elementos do registo Entra/Graph.
+
+### Criar duas vistas sobre a mesma lista (sem duplicar dados)
+
+Na lista de testes já criada em Microsoft Lists/SharePoint:
+
+1. Abrir o menu de vistas no topo da lista, junto a **Todos os itens**. Conforme a interface, selecionar **+ Adicionar vista**.
+2. Nome da primeira vista: **Plano mensal**. Tipo: **Calendário**. Início = `StartDate`, Fim = `EndDate`, rótulo = **Título**. Guardar.
+3. Criar uma segunda vista: **Plano anual**. Tipo: **Calendário**. Início = `AnnualStartDate`, Fim = `AnnualEndDate`, rótulo = **Título**. Guardar.
+4. Confirmar com um registo **fictício**: previsão anual 17–31 de janeiro de 2027 e confirmação mensal 17–27 de janeiro de 2027. O **mesmo item** deverá aparecer na vista anual até dia 31 e na mensal apenas até dia 27.
+5. Rever o **Histórico de versões** de um item para verificar a sequência das alterações. Histórico de versões não substitui plano de backup.
+6. Manter a lista com permissões próprias: **Proprietários** com controlo total e **Treinadores ILCA 7** com **Contribuir**. As vistas **não** concedem nem retiram permissões; isso é feito no SharePoint.
+
+Fontes Microsoft:
+- [Criar uma vista de calendário a partir de uma lista](https://support.microsoft.com/en-us/sharepoint/lists/create-a-calendar-view-from-a-list)
+- [Criar aplicação Power Apps a partir do SharePoint](https://learn.microsoft.com/en-us/power-apps/maker/canvas-apps/app-from-sharepoint)
+
+### Integração com o calendário React — decisão técnica pendente
+
+**Não colocar os dados privados num ficheiro público no GitHub** nem configurar um fluxo Power Automate a exportar eventos privados para GitHub Pages. Isso exporia informação da FPV. Também não é aceitável contornar a verificação multifator do Entra.
+
+Há duas opções legítimas:
+
+- **Sem alterações de licenciamento e sem Entra:** utilizar o Power Apps como interface de introdução e as vistas de calendário nativas do SharePoint como consulta operacional. A aparência ainda difere do calendário React aprovado.
+- **Preservar a interface React ligada a dados reais:** exigir registo/consentimento Microsoft Entra e autorização Graph sobre as listas. Só depois o frontend React poderá consultar o SharePoint com login e proteção efetiva. O registo depende do administrador do tenant.
+
+Neste incremento só foi adicionado ao GitHub Pages um **percurso de acesso e instruções**, sem fazer chamadas à lista real, alterar a exportação Excel ou guardar credenciais/IDs internos no código.
+
+---
+
+
 ## Objetivo
 
 Manter o calendário FPV e o Excel aprovados, continuar a alojar a interface no GitHub Pages e experimentar, com **dados exclusivamente fictícios**, login Microsoft e planeamentos persistentes em SharePoint/Microsoft Lists.
