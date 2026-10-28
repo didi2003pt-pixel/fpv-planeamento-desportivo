@@ -108,13 +108,14 @@ export default function PrivatePortal() {
 
   async function signOut() {
     setBusy(true); setError('');
-    try { await api('/auth/logout', 'POST', {}); }
-    catch (reason) { setError(message(reason)); }
-    finally {
+    try {
+      await api('/auth/logout', 'POST', {});
       setProfile(null); setSession('signed-out');
       setAccounts([]); setClasses([]); setItems([]); setSelectedId('');
-      setBusy(false);
-    }
+    } catch (reason) {
+      // Não mostrar a sessão como terminada quando a revogação falha no servidor.
+      setError(message(reason));
+    } finally { setBusy(false); }
   }
 
   async function refreshAdmin() {
