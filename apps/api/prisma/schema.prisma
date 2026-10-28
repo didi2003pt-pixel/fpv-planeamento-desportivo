@@ -101,6 +101,9 @@ model Activity {
   planningStage        PlanningStage         @default(ANNUAL)
   startDate            DateTime              @db.Date
   endDate              DateTime              @db.Date
+  annualStartDate      DateTime?             @db.Date
+  annualEndDate        DateTime?             @db.Date
+  monthlyConfirmed     Boolean               @default(false)
   location             String?               @db.VarChar(200)
   expectedAthleteCount Int?
   sailingClassId       String                @db.Uuid
