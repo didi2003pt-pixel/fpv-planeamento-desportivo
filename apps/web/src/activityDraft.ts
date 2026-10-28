@@ -13,6 +13,21 @@ export interface ActivityDraft {
   participantLines: string;
 }
 
+/** Retorna um rascunho fiel ao evento, sem modificar o original. */
+export function activityToDraft(activity: DemoActivity): ActivityDraft {
+  return {
+    title: activity.title,
+    sailingClass: activity.sailingClass,
+    type: activity.type,
+    status: activity.status,
+    start: activity.start,
+    end: activity.end,
+    location: activity.location === 'Por definir' ? '' : activity.location,
+    expectedAthletes: activity.expectedAthletes,
+    participantLines: activity.participants.join('\n'),
+  };
+}
+
 /** Valores de exemplo, sem qualquer pessoa ou atividade real. */
 export function initialActivityDraft(start: string): ActivityDraft {
   return {
@@ -43,7 +58,7 @@ export function validateActivityDraft(draft: ActivityDraft): string | null {
   if (!['CAMP', 'COMPETITION', 'TRAINING', 'TRAVEL', 'EDUCATION', 'OTHER'].includes(draft.type)) {
     return 'Seleciona um tipo de atividade válido.';
   }
-  if (!['PLANNED', 'CONFIRMED'].includes(draft.status)) {
+  if (!['PLANNED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'].includes(draft.status)) {
     return 'Seleciona o estado previsto ou confirmado.';
   }
   if (!isValidCivilDate(draft.start) || !isValidCivilDate(draft.end)) {
@@ -69,6 +84,9 @@ export function validateActivityDraft(draft: ActivityDraft): string | null {
 export function createDemoActivity(draft: ActivityDraft, id: string): DemoActivity {
   const error = validateActivityDraft(draft);
   if (error) throw new Error(error);
+  if (draft.status === 'CANCELLED' || draft.status === 'COMPLETED') {
+    throw new Error('Uma nova atividade tem de começar como prevista ou confirmada.');
+  }
   return {
     id,
     title: draft.title.trim(),
@@ -82,4 +100,29 @@ export function createDemoActivity(draft: ActivityDraft, id: string): DemoActivi
     expectedAthletes: draft.expectedAthletes,
     participants: parseParticipants(draft.participantLines),
   };
+}
+
+/** Edição local: conserva o ID e o treinador; apenas campos do formulário mudam. */
+export function editDemoActivity(original: DemoActivity, draft: ActivityDraft): DemoActivity {
+  const error = validateActivityDraft(draft);
+  if (error) throw new Error(error);
+  return {
+    ...original,
+    title: draft.title.trim(),
+    sailingClass: draft.sailingClass,
+    type: draft.type,
+    status: draft.status,
+    start: draft.start,
+    end: draft.end,
+    location: draft.location.trim() || 'Por definir',
+    expectedAthletes: draft.expectedAthletes,
+    participants: parseParticipants(draft.participantLines),
+  };
+}
+
+/** Cancelamento é uma alteração de estado, não elimina o registo ou participantes. */
+export function changeDemoActivityStatus(
+  original: DemoActivity, status: 'CANCELLED' | 'PLANNED',
+): DemoActivity {
+  return { ...original, status };
 }
