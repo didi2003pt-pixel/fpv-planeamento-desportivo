@@ -12,6 +12,7 @@ import {
 import { exportDemoExcel } from './exportExcel';
 import { fpvReferenceClasses } from './exportClassMap';
 import CreateActivityDialog from './CreateActivityDialog';
+import { changeDemoActivityStatus } from './activityDraft';
 
 const sailingClasses = [...fpvReferenceClasses];
 const dateFormatter = new Intl.DateTimeFormat('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -21,7 +22,13 @@ function prettyDate(iso: string): string {
   return dateFormatter.format(new Date(year, month - 1, day));
 }
 
-function ActivityDetail({ activity }: { activity: DemoActivity | undefined }) {
+function ActivityDetail({
+  activity, onEdit, onToggleCancelled,
+}: {
+  activity: DemoActivity | undefined;
+  onEdit: (activity: DemoActivity) => void;
+  onToggleCancelled: (activity: DemoActivity) => void;
+}) {
   if (!activity) {
     return <div className="empty-detail">Seleciona uma atividade no calendário para ver os detalhes.</div>;
   }
@@ -52,7 +59,17 @@ function ActivityDetail({ activity }: { activity: DemoActivity | undefined }) {
       ) : <p className="muted note">Os nomes dos participantes ainda não foram indicados.</p>}
       {activity.expectedAthletes > activity.participants.length &&
         <p className="subtle-note">Faltam indicar {activity.expectedAthletes - activity.participants.length} nomes previstos.</p>}
-      <p className="demo-footnote">Dados apenas de demonstração · ainda sem edição nem gravação definitiva.</p>
+      <div className="detail-actions">
+        <button type="button" className="detail-edit" onClick={() => onEdit(activity)}>
+          Editar atividade
+        </button>
+        <button type="button"
+          className={activity.status === 'CANCELLED' ? 'detail-restore' : 'detail-cancel'}
+          onClick={() => onToggleCancelled(activity)}>
+          {activity.status === 'CANCELLED' ? 'Reativar como previsto' : 'Cancelar atividade'}
+        </button>
+      </div>
+      <p className="demo-footnote">Edição e cancelamento temporários: as alterações não ficam guardadas num servidor.</p>
     </section>
   );
 }
@@ -61,6 +78,7 @@ function App() {
   const calendarRef = useRef<FullCalendar>(null);
   const [allActivities, setAllActivities] = useState<DemoActivity[]>(() => demoActivities());
   const [creatingFor, setCreatingFor] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
   const [selectedClass, setSelectedClass] = useState('ALL');
   const [selectedType, setSelectedType] = useState('ALL');
@@ -98,6 +116,7 @@ function App() {
 
   const selected = filtered.find((a) => a.id === selectedId) ?? filtered[0];
   const currentClasses = new Set(filtered.map((a) => a.sailingClass)).size;
+  const editingActivity = editingId ? allActivities.find((a) => a.id === editingId) : undefined;
 
   function addActivity(activity: DemoActivity) {
     setAllActivities((current) => [...current, activity]);
@@ -107,6 +126,29 @@ function App() {
     calendarRef.current?.getApi().gotoDate(activity.start);
     setCreatingFor(null);
     setNotice('Atividade de demonstração adicionada. Já aparece no calendário e na exportação Excel desta sessão.');
+  }
+
+  function saveEditedActivity(activity: DemoActivity) {
+    setAllActivities((current) => current.map((item) => item.id === activity.id ? activity : item));
+    setSelectedClass('ALL');
+    setSelectedType('ALL');
+    setSelectedId(activity.id);
+    calendarRef.current?.getApi().gotoDate(activity.start);
+    setEditingId(null);
+    setNotice('Alterações aplicadas nesta sessão: calendário e Excel atualizados. Não ficam guardadas online.');
+  }
+
+  function toggleCancelled(activity: DemoActivity) {
+    const cancelled = activity.status === 'CANCELLED';
+    if (!cancelled && !window.confirm(
+      'Cancelar "' + activity.title + '"? A atividade ficará assinalada como cancelada no calendário e no Excel desta sessão.',
+    )) return;
+    const updated = changeDemoActivityStatus(activity, cancelled ? 'PLANNED' : 'CANCELLED');
+    setAllActivities((current) => current.map((item) => item.id === updated.id ? updated : item));
+    setSelectedId(updated.id);
+    setNotice(cancelled
+      ? 'Atividade reativada como prevista nesta sessão (não confirmada).'
+      : 'Atividade cancelada nesta sessão. Não foi eliminada e mantém os seus dados.');
   }
 
   function changeView(view: string) {
@@ -199,7 +241,7 @@ function App() {
             </div>
           </div>
 
-          <div className="disclaimer"><strong>Modo de demonstração pública:</strong> os exemplos iniciais são fictícios. Não introduzas nomes nem dados pessoais reais. Os novos registos ficam apenas nesta página enquanto estiver aberta; perdem-se ao atualizar.</div>
+          <div className="disclaimer"><strong>Modo de demonstração pública:</strong> os exemplos iniciais são fictícios. Não introduzas nomes nem dados pessoais reais. Criações, edições e cancelamentos existem apenas nesta página enquanto estiver aberta; perdem-se ao atualizar.</div>
           {notice && <div className="create-notice" role="status">{notice}</div>}
 
           <div className="stats-grid">
@@ -214,7 +256,7 @@ function App() {
           <section className="workspace">
             <div className="calendar-panel">
               <div className="section-heading">
-                <div><h2>Calendário de atividades</h2><p>Seleciona uma atividade para ver os detalhes.</p></div>
+                <div><h2>Calendário de atividades</h2><p>Seleciona uma atividade para consultar, editar ou cancelar.</p></div>
               </div>
               <div className="filter-row">
                 <label className="filter-field"><span>Classe</span>
@@ -270,12 +312,17 @@ function App() {
 
             <aside className="detail-panel">
               <div className="detail-title"><h2>Detalhes da atividade</h2><span>◉</span></div>
-              <ActivityDetail activity={selected} />
+              <ActivityDetail activity={selected}
+                onEdit={(activity) => { setNotice(''); setCreatingFor(null); setEditingId(activity.id); }}
+                onToggleCancelled={toggleCancelled} />
             </aside>
           </section>
           <footer>FPV Planeamento Desportivo · Protótipo de avaliação · Não utilizar para dados reais.</footer>
-          {creatingFor && <CreateActivityDialog startDate={creatingFor}
-            onCreate={addActivity} onClose={() => setCreatingFor(null)} /> }
+          {creatingFor && <CreateActivityDialog key="new" startDate={creatingFor}
+            onSave={addActivity} onClose={() => setCreatingFor(null)} />}
+          {editingActivity && <CreateActivityDialog key={editingActivity.id}
+            startDate={editingActivity.start} activity={editingActivity}
+            onSave={saveEditedActivity} onClose={() => setEditingId(null)} />}
         </main>
       </div>
     </div>
