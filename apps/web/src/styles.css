@@ -104,3 +104,7 @@
 .monthly-baseline span{font-size:15px;color:#173a60;font-weight:750}
 .monthly-baseline small{font-size:11px;color:#7891a8}
 .monthly-explanation{font-size:12px;color:#71869b;line-height:1.65;margin:0}
+
+/* Ligação disponível apenas no build Docker, não no GitHub Pages */
+.private-entry-link{display:flex;gap:8px;align-items:center;text-decoration:none;color:#9fd5e4!important;font-weight:750!important}
+.private-entry-link:hover{background:#244763}

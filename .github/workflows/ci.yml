@@ -54,6 +54,8 @@ jobs:
         run: npm run test:calendar
       - name: Testar comparação anual e confirmação mensal
         run: npm run test:monthly
+      - name: Testar cliente API da área privada
+        run: npm run test:private
       - name: Verificar TypeScript e compilar interface
         run: npm run build
       - name: Verificar build estático do GitHub Pages
@@ -85,6 +87,12 @@ jobs:
           done
           echo "Health check não respondeu a tempo"
           exit 1
+      - name: Verificar rota privada no nginx de Docker
+        shell: bash
+        run: |
+          curl --fail --silent --show-error http://localhost:8080/gestao -o /tmp/fpv-gestao.html
+          grep -q '<div id="root"' /tmp/fpv-gestao.html
+          rm -f /tmp/fpv-gestao.html
       - name: Testar migração PostgreSQL e sessão protegida
         shell: bash
         run: |
