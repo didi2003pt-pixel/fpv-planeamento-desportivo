@@ -1,29 +1,9 @@
 import {
-  Body, Controller, ForbiddenException, Get, HttpCode, Post, Req, Res,
-  UnsupportedMediaTypeException,
+  Body, Controller, Get, HttpCode, Post, Req, Res,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from './auth.service';
-
-function tokenFromRequest(req: Request): string | undefined {
-  const raw = req.headers.cookie ?? '';
-  const pairs = raw.split(';').map((item) => item.trim());
-  const pair = pairs.find((item) => item.startsWith(SESSION_COOKIE + '='));
-  return pair?.slice(SESSION_COOKIE.length + 1);
-}
-
-/** Requer JSON e bloqueia origens diferentes nos pedidos que modificam sessões. */
-function validateSameOrigin(req: Request): void {
-  if (!req.is('application/json')) throw new UnsupportedMediaTypeException('O pedido deve ser JSON.');
-  const origin = req.get('origin');
-  if (origin) {
-    try {
-      if (new URL(origin).host !== req.get('host')) throw new ForbiddenException('Origem não permitida.');
-    } catch {
-      throw new ForbiddenException('Origem não permitida.');
-    }
-  }
-}
+import { tokenFromRequest, validateSameOrigin } from './request';
 
 const cookieOptions = {
   httpOnly: true,
