@@ -10,13 +10,20 @@ import { statusLabel, typeMeta, type ActivityStatus, type ActivityType, type Dem
 interface Props {
   startDate: string;
   activity?: DemoActivity;
+  allowedClasses?: string[];
   onSave: (activity: DemoActivity) => void;
   onClose: () => void;
 }
 
-export default function CreateActivityDialog({ startDate, activity, onSave, onClose }: Props) {
+export default function CreateActivityDialog({ startDate, activity, allowedClasses, onSave, onClose }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [draft, setDraft] = useState<ActivityDraft>(() => activity ? activityToDraft(activity) : initialActivityDraft(startDate));
+  const [draft, setDraft] = useState<ActivityDraft>(() => {
+    const draft = activity ? activityToDraft(activity) : initialActivityDraft(startDate);
+    if (!activity && allowedClasses && allowedClasses.length > 0) {
+      draft.sailingClass = allowedClasses[0];
+    }
+    return draft;
+  });
   const [error, setError] = useState<string | null>(null);
   const count = parseParticipants(draft.participantLines).length;
 
@@ -34,6 +41,10 @@ export default function CreateActivityDialog({ startDate, activity, onSave, onCl
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const validationError = validateActivityDraft(draft);
+    if (allowedClasses && !allowedClasses.includes(draft.sailingClass)) {
+      setError('Esta classe não está atribuída à vista do treinador selecionado.');
+      return;
+    }
     if (validationError) {
       setError(validationError);
       return;
@@ -67,7 +78,8 @@ export default function CreateActivityDialog({ startDate, activity, onSave, onCl
         </label>
         <label className="form-field">Classe *
           <select value={draft.sailingClass} onChange={(e) => update('sailingClass', e.target.value)}>
-            {fpvReferenceClasses.map((item) => <option key={item} value={item}>{item}</option>)}
+            {fpvReferenceClasses.filter((item) => !allowedClasses || allowedClasses.includes(item)).map((item) =>
+              <option key={item} value={item}>{item}</option>)}
           </select>
         </label>
         <label className="form-field">Tipo de atividade *
