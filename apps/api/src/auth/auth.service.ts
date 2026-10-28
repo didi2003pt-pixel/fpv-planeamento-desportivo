@@ -1,4 +1,4 @@
-import { Injectable, TooManyRequestsException, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 import { verifyPassword } from './password';
@@ -35,7 +35,7 @@ export class AuthService {
       this.attempts.set(key, { attempts: 0, expires: now + 15 * 60_000 });
       return;
     }
-    if (bucket.attempts >= 6) throw new TooManyRequestsException('Demasiadas tentativas de acesso.');
+    if (bucket.attempts >= 6) throw new HttpException('Demasiadas tentativas de acesso.', HttpStatus.TOO_MANY_REQUESTS);
   }
 
   private recordFailure(email: string, ip: string): void {
