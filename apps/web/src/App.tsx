@@ -303,6 +303,8 @@ function App() {
             <div className="calendar-panel">
               <div className="section-heading">
                 <div><h2>Calendário de atividades</h2><p>Seleciona uma atividade para consultar, editar ou cancelar.</p></div>
+                {viewId === FEDERATION_VIEW && <button type="button" className="coach-manager-mobile"
+                  onClick={() => setShowCoachManager(true)}>Treinadores e classes</button>}
               </div>
               <div className="filter-row">
                 <label className="filter-field"><span>Classe</span>
