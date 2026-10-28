@@ -84,3 +84,23 @@
 @media(max-width:900px){.topbar{height:auto;min-height:74px;flex-wrap:wrap;gap:8px;padding-top:9px;padding-bottom:9px}.demo-view-select select{max-width:170px}.coach-manager-body{grid-template-columns:205px minmax(0,1fr)}}
 @media(max-width:740px){.topbar{align-items:center}.demo-view-select select{max-width:190px}.coach-manager-mobile{display:inline-flex;border:1px solid #c9ddea;color:#1d6587;background:#edf6fc;border-radius:7px;font-size:11px;padding:9px 11px;font-weight:750;align-self:center}.section-heading{gap:14px}.coach-manager-body{grid-template-columns:1fr;padding:15px 17px 22px}.coach-list{border-right:0;border-bottom:1px solid #e4edf6;padding:0 0 13px;max-height:165px;overflow-y:auto}.coach-class-grid{gap:6px}.coach-class-choice{padding:9px;font-size:11px}.coach-dialog{width:calc(100vw - 14px)}}
 @media(max-width:430px){.demo-view-select select{max-width:165px}.topbar-right{flex-wrap:wrap;justify-content:flex-end}.coach-class-grid{grid-template-columns:1fr 1fr}.coach-form-bottom{flex-wrap:wrap}}
+
+/* INC-011: comparação do plano anual com a confirmação mensal */
+.monthly-summary{background:#f4f8fe;border:1px solid #dce8f5;border-radius:10px;padding:13px;display:grid;gap:12px}
+.monthly-summary-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.monthly-summary-header>strong{font-size:12px;color:#213c5c}
+.monthly-status{font-size:10px;background:#fff1da;color:#986620;border-radius:6px;padding:5px 7px;font-weight:750;white-space:nowrap}
+.monthly-status.done{background:#dff5eb;color:#187257}
+.monthly-summary>div:not(.monthly-summary-header){display:grid;gap:4px}
+.monthly-summary>div>span:not(.monthly-status){font-size:11px;color:#8195ab}
+.monthly-summary>div>strong{font-size:12px;color:#284b6f;line-height:1.5}
+.monthly-summary p{font-size:11px;line-height:1.6;color:#4d7296;margin:0}
+.detail-monthly{background:#edf7fd;color:#175f89;border:1px solid #b9d7e8}
+.detail-monthly:hover{background:#dceffb}
+.detail-monthly:disabled{opacity:.45;cursor:not-allowed}
+.monthly-dialog{width:min(640px,calc(100vw - 24px))}
+.monthly-baseline{background:#edf5fd;border:1px solid #d7e8f7;padding:15px;border-radius:9px;display:grid;gap:5px}
+.monthly-baseline strong{font-size:12px;color:#224d73}
+.monthly-baseline span{font-size:15px;color:#173a60;font-weight:750}
+.monthly-baseline small{font-size:11px;color:#7891a8}
+.monthly-explanation{font-size:12px;color:#71869b;line-height:1.65;margin:0}
