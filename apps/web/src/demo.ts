@@ -10,6 +10,11 @@ export interface DemoActivity {
   status: ActivityStatus;
   start: string; // ISO YYYY-MM-DD, inclusivo
   end: string; // ISO YYYY-MM-DD, inclusivo
+  /** Previsão anual original, conservada quando o mês é confirmado. */
+  annualStart?: string;
+  annualEnd?: string;
+  /** Confirmação mensal distinta do estado da atividade. */
+  monthlyConfirmed?: boolean;
   location: string;
   coach: string;
   expectedAthletes: number;
@@ -52,10 +57,15 @@ export function addDays(iso: string, count: number): string {
 export function demoActivities(): DemoActivity[] {
   const example = (id: string, title: string, sailingClass: string, type: ActivityType,
     month: number, first: number, last: number, location: string, expectedAthletes: number,
-    participants: string[], status: ActivityStatus = 'PLANNED'): DemoActivity => ({
-    id, title, sailingClass, type, start: makeDate(month, first), end: makeDate(month, last),
-    location, expectedAthletes, participants, status, coach: 'Treinador de demonstração',
-  });
+    participants: string[], status: ActivityStatus = 'PLANNED'): DemoActivity => {
+    const start = makeDate(month, first);
+    const end = makeDate(month, last);
+    return {
+      id, title, sailingClass, type, start, end,
+      annualStart: start, annualEnd: end, monthlyConfirmed: false,
+      location, expectedAthletes, participants, status, coach: 'Treinador de demonstração',
+    };
+  };
 
   return [
     example('01', 'Estágio técnico', 'ILCA 7', 'CAMP', 0, 4, 9, 'Vilamoura', 5, ['Atleta 01', 'Atleta 02', 'Atleta 03'], 'CONFIRMED'),
