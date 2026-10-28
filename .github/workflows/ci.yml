@@ -60,6 +60,7 @@ jobs:
     env:
       POSTGRES_PASSWORD: ci_test_password_123
       APP_PORT: '8080'
+      SESSION_COOKIE_SECURE: 'false'
     steps:
       - uses: actions/checkout@v4
       - name: Construir e iniciar containers
