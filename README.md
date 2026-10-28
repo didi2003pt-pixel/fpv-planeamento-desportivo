@@ -94,3 +94,13 @@ Validação de regras e integração: `cd apps/web && npm run test:form`.
 Para validar: `cd apps/web && npm run test:coaches`.
 
 **Passo técnico necessário antes do uso real:** criar autenticação segura no backend e filtrar todas as consultas, alterações e exportações pelo âmbito autorizado na API; só então guardar treinadores, associações e atletas reais em PostgreSQL.
+
+## INC-010 — indicadores do calendário alinhados com a navegação
+
+Após revisão da gravação `teste 12.mp4`, verificou-se que, nos meses sem atividades (por exemplo, em 2027), os cartões de resumo continuavam a mostrar contagens globais de atividades de 2026, e o painel lateral continuava a mostrar uma atividade de um mês anterior.
+
+**Correção limitada à interface:** contadores de atividades, classes, estágios e competições usam o mês/ano visível, com início incluído e fim exclusivo; o painel lateral só apresenta uma atividade desse período. O número junto dos filtros segue a mesma regra. Datas que atravessam meses contam em ambos os meses relevantes.
+
+**Não foi alterado nenhum ficheiro da exportação Excel**, nem a estrutura das três folhas já aprovadas. Os dados continuam fictícios, apenas em memória.
+
+Teste: `cd apps/web && npm run test:calendar`.
