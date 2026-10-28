@@ -54,6 +54,7 @@ model User {
   leadingActivities Activity[]       @relation("LeadCoach")
   createdActivities Activity[]       @relation("ActivityCreator")
   changes           ActivityChange[]
+  administrativeChanges AdminChange[]
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -173,4 +174,19 @@ model AuthSession {
 
   @@index([userId, expiresAt])
   @@map("auth_sessions")
+}
+
+model AdminChange {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String   @db.Uuid
+  actor     User     @relation(fields: [actorId], references: [id])
+  action    String   @db.VarChar(60)
+  targetId  String   @db.VarChar(100)
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([targetId, createdAt])
+  @@map("admin_changes")
 }
