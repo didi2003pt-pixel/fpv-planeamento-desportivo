@@ -29,6 +29,8 @@ jobs:
         run: npm run test:auth
       - name: Testar regras de acesso e validação das atividades
         run: npm run test:activities
+      - name: Testar validações de contas e atribuições
+        run: npm run test:admin
 
   build-web:
     runs-on: ubuntu-latest
@@ -106,6 +108,12 @@ jobs:
           docker compose exec -T db psql -v ON_ERROR_STOP=1 -U fpv -d fpv_planeamento < apps/api/tests/fixtures.sql
           node apps/api/tests/activities.integration.mjs
           docker compose exec -T db psql -U fpv -d fpv_planeamento -tAc 'SELECT COUNT(*) FROM activity_changes' | grep -qx 3
+      - name: Testar administração de contas e revogação de acessos
+        shell: bash
+        run: |
+          node apps/api/tests/admin.integration.mjs
+          docker compose exec -T db psql -U fpv -d fpv_planeamento -tAc 'SELECT COUNT(*) FROM admin_changes' | grep -qx 6
+
       - name: Mostrar diagnóstico em caso de falha
         if: failure()
         run: |
