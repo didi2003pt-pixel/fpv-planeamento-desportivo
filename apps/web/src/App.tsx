@@ -19,6 +19,7 @@ import {
   initialDemoCoaches, type DemoCoach,
 } from './demoCoaches';
 import { changeDemoActivityStatus } from './activityDraft';
+import { activitiesInPeriod, civilDate, periodFromMonth } from './calendarPeriod';
 
 const sailingClasses = [...fpvReferenceClasses];
 const dateFormatter = new Intl.DateTimeFormat('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -99,6 +100,7 @@ function App() {
   const [selectedId, setSelectedId] = useState('01');
   const [viewType, setViewType] = useState('dayGridMonth');
   const [calendarTitle, setCalendarTitle] = useState('');
+  const [visiblePeriod, setVisiblePeriod] = useState(() => periodFromMonth(new Date()));
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline' | 'demo'>(import.meta.env.MODE === 'pages' ? 'demo' : 'checking');
   const [exporting, setExporting] = useState(false);
 
@@ -132,8 +134,10 @@ function App() {
     classNames: a.status === 'CANCELLED' ? ['event-cancelled'] : [],
   })), [filtered]);
 
-  const selected = filtered.find((a) => a.id === selectedId) ?? filtered[0];
-  const currentClasses = new Set(filtered.map((a) => a.sailingClass)).size;
+  const visibleActivities = useMemo(() => activitiesInPeriod(filtered, visiblePeriod),
+    [filtered, visiblePeriod]);
+  const selected = visibleActivities.find((a) => a.id === selectedId) ?? visibleActivities[0];
+  const currentClasses = new Set(visibleActivities.map((a) => a.sailingClass)).size;
   const editingActivity = editingId ? allActivities.find((a) => a.id === editingId) : undefined;
 
   function addActivity(activity: DemoActivity) {
@@ -216,10 +220,10 @@ function App() {
   }
 
   const stats = [
-    { label: 'Atividades', number: filtered.length, symbol: '▦', tone: 'blue' },
+    { label: 'Atividades', number: visibleActivities.length, symbol: '▦', tone: 'blue' },
     { label: 'Classes', number: currentClasses, symbol: '◈', tone: 'teal' },
-    { label: 'Estágios', number: filtered.filter((a) => a.type === 'CAMP').length, symbol: '⚑', tone: 'violet' },
-    { label: 'Competições', number: filtered.filter((a) => a.type === 'COMPETITION').length, symbol: '✦', tone: 'amber' },
+    { label: 'Estágios', number: visibleActivities.filter((a) => a.type === 'CAMP').length, symbol: '⚑', tone: 'violet' },
+    { label: 'Competições', number: visibleActivities.filter((a) => a.type === 'COMPETITION').length, symbol: '✦', tone: 'amber' },
   ];
 
   return (
@@ -321,7 +325,7 @@ function App() {
                       <option key={key} value={key}>{typeMeta[key].label}</option>)}
                   </select>
                 </label>
-                <div className="filter-result">{filtered.length} atividades na demonstração</div>
+                <div className="filter-result">{visibleActivities.length} atividades neste {viewType === 'multiMonthYear' ? 'ano' : 'mês'}</div>
               </div>
               <div className="calendar-toolbar">
                 <div className="date-nav">
@@ -353,7 +357,14 @@ function App() {
                     if (allowedClasses !== null && allowedClasses.length === 0) return;
                     setNotice(''); setCreatingFor(info.dateStr);
                   }}
-                  datesSet={(info) => { setCalendarTitle(info.view.title); setViewType(info.view.type); }}
+                  datesSet={(info) => {
+                    setCalendarTitle(info.view.title);
+                    setViewType(info.view.type);
+                    setVisiblePeriod({
+                      start: civilDate(info.view.currentStart),
+                      endExclusive: civilDate(info.view.currentEnd),
+                    });
+                  }}
                 />
               </div>
               <div className="calendar-legend">
