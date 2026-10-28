@@ -167,11 +167,22 @@ export default function M365Portal() {
       <p className="m365-muted">Login Microsoft e planeamentos guardados em listas SharePoint separadas por classe. O Excel aprovado e o calendário demonstrativo permanecem inalterados.</p>
       {!ready && <p role="status" className="m365-box">A verificar a configuração Microsoft…</p>}
       {ready && !config && <section className="m365-box m365-unconfigured">
-        <h2>Ligação ainda não configurada</h2>
-        <p>O código está preparado, mas faltam os identificadores da aplicação Microsoft Entra e das listas SharePoint da Federação.</p>
-        <p>Um administrador Microsoft 365 terá de registar a aplicação SPA, autorizar as permissões e indicar as listas disponíveis em <code>m365-config.json</code>. Não introduzas passwords ou segredos nesse ficheiro.</p>
-        <p>Nenhum planeamento real foi carregado ou publicado.</p>
-        <a href="https://github.com/didi2003pt-pixel/fpv-planeamento-desportivo/blob/main/docs/MICROSOFT_365.md" target="_blank" rel="noopener noreferrer">Consultar guia de configuração</a>
+        <h2>Continuar com Power Apps e SharePoint</h2>
+        <p>Já é possível criar e alterar atividades na aplicação Power Apps ligada à lista SharePoint da FPV. Ao guardar, o Power Apps atualiza o mesmo item da lista; o histórico de versões do SharePoint regista as alterações.</p>
+        <p><strong>Para ver o planeamento num calendário sem instalar nada:</strong></p>
+        <ol>
+          <li>Abre a lista da tua classe no SharePoint (por exemplo, a lista de testes ILCA 7).</li>
+          <li>No seletor de vistas, junto a «Todos os itens», escolhe <strong>Adicionar vista → Calendário</strong>.</li>
+          <li>Cria a vista <strong>Plano mensal</strong> com <code>StartDate</code> como início e <code>EndDate</code> como fim.</li>
+          <li>Cria outra vista <strong>Plano anual</strong> com <code>AnnualStartDate</code> e <code>AnnualEndDate</code>.</li>
+        </ol>
+        <p>As duas vistas mostram os mesmos registos, sem duplicação. A autenticação e as permissões continuam a ser geridas pela Microsoft.</p>
+        <div className="m365-shortcuts">
+          <a href="https://make.powerapps.com/" target="_blank" rel="noopener noreferrer">Abrir Power Apps</a>
+          <a href="https://www.microsoft365.com/launch/Lists" target="_blank" rel="noopener noreferrer">Abrir Microsoft Lists</a>
+        </div>
+        <p className="m365-muted">A ligação automática ao calendário React do GitHub ainda não funciona: faltam o registo Microsoft Entra, o consentimento e a configuração Graph. Não introduzas dados pessoais no calendário demonstrativo público.</p>
+        <a href="https://github.com/didi2003pt-pixel/fpv-planeamento-desportivo/blob/main/docs/MICROSOFT_365.md" target="_blank" rel="noopener noreferrer">Guia de configuração e segurança</a>
       </section>}
       {error && <p className="m365-alert" role="alert">{error}</p>}
       {notice && <p className="m365-success" role="status">{notice}</p>}
