@@ -82,3 +82,15 @@ A partir do painel **Detalhes da atividade**, depois de clicar num evento no cal
 **Limitação:** GitHub Pages é estático. Edições, cancelamentos e reativações são efémeros, sem conta, sem auditoria e sem persistência; tudo volta aos dados fictícios iniciais após recarregar a página. Não utilizar dados pessoais reais nem disponibilizar o sistema como ferramenta oficial de planeamento até existir backend autenticado e autorização por classe.
 
 Validação de regras e integração: `cd apps/web && npm run test:form`.
+
+## INC-009 — Treinadores e classes (simulação, sem login)
+- A barra superior inclui **Vista (simulação)**: Federação (todas as classes) ou um treinador **fictício**.
+- A vista do treinador apresenta atividades das classes que lhe estão atribuídas, oferece essas classes no formulário e exporta apenas as atividades visíveis para Excel.
+- Na vista Federação, abrir **Treinadores e classes** para adicionar treinadores fictícios e associar/desassociar classes; uma classe pode estar associada a vários treinadores.
+- Os nomes e atribuições são amostras inventadas que vivem apenas em memória. Alterações e novos treinadores desaparecem ao atualizar a página.
+- Uma vista de treinador **não é autenticação nem proteção de dados**: qualquer visitante pode selecionar qualquer vista, voltar à Federação e consultar todos os exemplos. Não usar dados reais.
+- O aspeto e código das três folhas Excel exportadas **não foram alterados**.
+
+Para validar: `cd apps/web && npm run test:coaches`.
+
+**Passo técnico necessário antes do uso real:** criar autenticação segura no backend e filtrar todas as consultas, alterações e exportações pelo âmbito autorizado na API; só então guardar treinadores, associações e atletas reais em PostgreSQL.
