@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, TooManyRequestsException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, TooManyRequestsException, UnauthorizedException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 import { verifyPassword } from './password';
@@ -112,4 +112,4 @@ export class AuthService {
 }
 
 // Hash fixo, não é uma credencial. Verificação de tempo semelhante para emails desconhecidos.
-const DUMMY_HASH = 'scrypt$16384$8$1$hP4oN3d_IQ5b0ZXLL64D-g$k60Tq7YAKcsRM6-0mGUCccjvSFRnGdQdhJ0clhIVNLqzj_4s1qVM5Ee2lD8eD4ZVyH5o5S6srSHrP4oRCR2h6xcg';
+const DUMMY_HASH = 'scrypt$16384$8$1$EREREREREREREREREREREQ$YlfYFAbbfOu6SnWX-wf0Z-FlnydSed9RRUSGF4jV0BAmcO_2e0z87FLT5Y-kG9J_Z9gZ-eOOGxm4jBqPoM6ptw';
