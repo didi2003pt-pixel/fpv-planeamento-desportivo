@@ -44,6 +44,8 @@ jobs:
         run: npm run test:coaches
       - name: Validar contadores por período do calendário
         run: npm run test:calendar
+      - name: Testar comparação anual e confirmação mensal
+        run: npm run test:monthly
       - name: Verificar TypeScript e compilar interface
         run: npm run build
       - name: Verificar build estático do GitHub Pages
