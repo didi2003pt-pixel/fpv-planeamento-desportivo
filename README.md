@@ -134,3 +134,7 @@ O backend permite a um administrador criar contas fictícias e classes, atribuir
 ## INC-015 — Portal privado em Docker
 
 Uma primeira interface de login e administração pode ser aberta em **`http://localhost:8080/gestao` após iniciar Docker**. Permite administrar contas fictícias, atribuir classes e consultar atividades da API persistente. **Não está publicada no GitHub Pages nem pronta para dados reais.** O Excel e o calendário de demonstração mantêm-se intactos. Ver [Guia da área privada](docs/PORTAL_PRIVADO.md).
+
+## INC-016 — Integração Microsoft 365 (sem Docker)
+
+Criada uma área de piloto em [Microsoft 365](https://didi2003pt-pixel.github.io/fpv-planeamento-desportivo/?m365=1), que prepara login Entra e persistência por listas SharePoint com permissões por classe. **Ainda não está ligada ao tenant da Federação**: até haver configuração aprovada, a área mostra instruções e não recolhe dados. A demonstração e o Excel FPV não foram alterados. Guia técnico: [MICROSOFT_365.md](docs/MICROSOFT_365.md).
