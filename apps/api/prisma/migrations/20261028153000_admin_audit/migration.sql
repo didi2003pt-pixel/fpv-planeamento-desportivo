@@ -12,3 +12,4 @@ CREATE INDEX "admin_changes_actorId_createdAt_idx" ON "admin_changes"("actorId",
 CREATE INDEX "admin_changes_targetId_createdAt_idx" ON "admin_changes"("targetId", "createdAt");
 ALTER TABLE "admin_changes" ADD CONSTRAINT "admin_changes_actorId_fkey"
  FOREIGN KEY ("actorId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "users" ADD COLUMN "authzVersion" INTEGER NOT NULL DEFAULT 0;
