@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import ExcelJS from 'exceljs';
 import {
-  createDemoActivity, initialActivityDraft, isValidCivilDate,
-  parseParticipants, validateActivityDraft,
+  activityToDraft, changeDemoActivityStatus, createDemoActivity, editDemoActivity,
+  initialActivityDraft, isValidCivilDate, parseParticipants, validateActivityDraft,
 } from '../src/activityDraft';
 import { addClassMap } from '../src/exportClassMap';
 
@@ -70,4 +70,73 @@ test('Validação impede classes desconhecidas e dados incompletos', () => {
 
 test('Criação com dados inválidos lança erro e não gera atividade', () => {
   assert.throws(() => createDemoActivity({ ...validDraft(), end: '2026-11-14' }, 'demo-test-3'));
+});
+
+
+test('Edição usa valores existentes e preserva ID e treinador', () => {
+  const old = createDemoActivity(validDraft(), 'original-17');
+  const edit = activityToDraft(old);
+  assert.equal(edit.start, old.start);
+  assert.equal(edit.participantLines, 'Atleta 01\nAtleta 02');
+  const saved = editDemoActivity(old, {
+    ...edit, title: 'Campeonato da Europa (exemplo)',
+    type: 'COMPETITION', sailingClass: '49er FX',
+    start: '2026-12-01', end: '2026-12-04',
+    location: 'França', expectedAthletes: 5,
+    participantLines: 'Atleta 03\nAtleta 04\nAtleta 05',
+    status: 'CONFIRMED',
+  });
+  assert.equal(saved.id, old.id);
+  assert.equal(saved.coach, old.coach);
+  assert.equal(saved.location, 'França');
+  assert.equal(saved.type, 'COMPETITION');
+  assert.equal(saved.sailingClass, '49er FX');
+  assert.equal(saved.expectedAthletes, 5);
+  assert.deepEqual(saved.participants, ['Atleta 03', 'Atleta 04', 'Atleta 05']);
+  assert.equal(saved.status, 'CONFIRMED');
+  assert.equal(old.title, 'Estágio de exemplo'); // atualização imutável
+  assert.equal(old.start, '2026-11-17');
+});
+
+test('Cancelar e reativar mantém o registo e altera a contagem do mapa Excel', () => {
+  const old = createDemoActivity(validDraft(), 'original-17');
+  const cancelled = changeDemoActivityStatus(old, 'CANCELLED');
+  assert.equal(cancelled.id, old.id);
+  assert.deepEqual(cancelled.participants, old.participants);
+  assert.equal(old.status, 'PLANNED');
+  const wb = new ExcelJS.Workbook();
+  const map = addClassMap(wb, [cancelled], 2026, 10);
+  assert.equal(map.getCell('B7').value, 0);
+  assert.equal(map.getCell(7, 19).value, '×');
+  const reactivated = changeDemoActivityStatus(cancelled, 'PLANNED');
+  assert.equal(reactivated.status, 'PLANNED');
+  assert.equal(reactivated.id, old.id);
+  const wb2 = new ExcelJS.Workbook();
+  assert.equal(addClassMap(wb2, [reactivated], 2026, 10).getCell('B7').value, 3);
+});
+
+test('Edição rejeita datas incorretas, nomes duplicados e atleta previsto insuficiente', () => {
+  const old = createDemoActivity(validDraft(), 'original-17');
+  const edit = activityToDraft(old);
+  assert.throws(() => editDemoActivity(old, { ...edit, end: '2026-11-16' }), /fim/);
+  assert.throws(() => editDemoActivity(old, { ...edit, participantLines: 'Atleta 01\nATLETA 01' }), /repetidos/);
+  assert.throws(() => editDemoActivity(old, { ...edit, expectedAthletes: 1 }), /mais nomes/);
+  assert.equal(editDemoActivity(old, { ...edit, status: 'COMPLETED' }).status, 'COMPLETED');
+  assert.equal(editDemoActivity(old, { ...edit, status: 'CANCELLED' }).status, 'CANCELLED');
+});
+
+test('Uma nova atividade não pode ser criada diretamente como realizada ou cancelada', () => {
+  assert.throws(() => createDemoActivity({ ...validDraft(), status: 'COMPLETED' }, 'x'), /prevista/);
+  assert.throws(() => createDemoActivity({ ...validDraft(), status: 'CANCELLED' }, 'y'), /prevista/);
+});
+
+test('Edição de eventos atravessando meses altera o mapa de origem e destino', () => {
+  const old = createDemoActivity(validDraft(), 'original-17');
+  const edited = editDemoActivity(old, {
+    ...activityToDraft(old), start: '2026-12-29', end: '2027-01-04',
+  });
+  const wb = new ExcelJS.Workbook();
+  assert.equal(addClassMap(wb, [edited], 2026, 11).getCell('B7').value, 3);
+  assert.equal(addClassMap(wb, [edited], 2027, 0).getCell('B7').value, 4);
+  assert.equal(addClassMap(wb, [edited], 2026, 10).getCell('B7').value, 0);
 });
