@@ -126,3 +126,7 @@ A primeira infraestrutura privada de acessos foi preparada: esquema e migraçõe
 ## INC-013 — atividades persistentes com permissões na API
 
 O backend privado tem agora endpoints de consulta, criação, edição e confirmação mensal de atividades gravadas no PostgreSQL com autorização por classe, auditoria e proteção contra gravações desatualizadas. **O GitHub Pages mantém a demonstração pública com dados fictícios e não usa estes endpoints.** O Excel de referência não foi modificado. Ver [API de atividades](docs/API_ATIVIDADES.md) para rotas, testes e precauções.
+
+## INC-014 — Administração privada de treinadores e classes
+
+O backend permite a um administrador criar contas fictícias e classes, atribuir/desatribuir classes e desativar contas com revogação das sessões. As alterações ficam auditadas e protegidas por versões. **Ainda não existe login real no site GitHub Pages e não se devem inserir dados pessoais reais.** Consultar [Administração de contas](docs/ADMIN_CONTAS.md). O Excel e a interface pública não foram alterados.
