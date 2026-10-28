@@ -360,10 +360,11 @@ function App() {
                   datesSet={(info) => {
                     setCalendarTitle(info.view.title);
                     setViewType(info.view.type);
-                    setVisiblePeriod({
-                      start: civilDate(info.view.currentStart),
-                      endExclusive: civilDate(info.view.currentEnd),
-                    });
+                    const start = civilDate(info.view.currentStart);
+                    const endExclusive = civilDate(info.view.currentEnd);
+                    setVisiblePeriod((previous) =>
+                      previous.start === start && previous.endExclusive === endExclusive
+                        ? previous : { start, endExclusive });
                   }}
                 />
               </div>
