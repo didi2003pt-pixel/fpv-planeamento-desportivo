@@ -270,6 +270,11 @@ function App() {
         </div>
         <div className="nav-section-title">PLATAFORMA</div>
         <div className="nav-active"><span>▦</span> Calendário geral</div>
+        {import.meta.env.MODE !== 'pages' && (
+          <a className="nav-inactive private-entry-link" href="/gestao">
+            <span>♙</span> Acesso privado (Docker)
+          </a>
+        )}
         <div className="nav-section-title muted-nav-title">EM PREPARAÇÃO</div>
         <div className="nav-inactive"><span>◫</span> Gestão de atividades</div>
         <button type="button" className="nav-inactive nav-action"
