@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test:mapa": "tsx --test tests/classMap.test.ts",
     "test:form": "tsx --test tests/activityDraft.test.ts",
-    "test:coaches": "tsx --test tests/demoCoaches.test.ts"
+    "test:coaches": "tsx --test tests/demoCoaches.test.ts",
+    "test:calendar": "tsx --test tests/calendarPeriod.test.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "6.1.19",
