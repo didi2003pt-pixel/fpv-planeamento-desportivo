@@ -11,7 +11,8 @@
     "prisma:migrate": "prisma migrate deploy --schema prisma/schema.prisma",
     "bootstrap:admin": "node dist/bootstrap-admin.js",
     "test:auth": "node --test dist/auth/password.test.js",
-    "test:activities": "node --test dist/activities/input.test.js"
+    "test:activities": "node --test dist/activities/input.test.js",
+    "test:admin": "node --test dist/admin/admin.input.test.js"
   },
   "dependencies": {
     "@nestjs/common": "11.1.6",
