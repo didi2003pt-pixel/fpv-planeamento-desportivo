@@ -130,3 +130,7 @@ O backend privado tem agora endpoints de consulta, criação, edição e confirm
 ## INC-014 — Administração privada de treinadores e classes
 
 O backend permite a um administrador criar contas fictícias e classes, atribuir/desatribuir classes e desativar contas com revogação das sessões. As alterações ficam auditadas e protegidas por versões. **Ainda não existe login real no site GitHub Pages e não se devem inserir dados pessoais reais.** Consultar [Administração de contas](docs/ADMIN_CONTAS.md). O Excel e a interface pública não foram alterados.
+
+## INC-015 — Portal privado em Docker
+
+Uma primeira interface de login e administração pode ser aberta em **`http://localhost:8080/gestao` após iniciar Docker**. Permite administrar contas fictícias, atribuir classes e consultar atividades da API persistente. **Não está publicada no GitHub Pages nem pronta para dados reais.** O Excel e o calendário de demonstração mantêm-se intactos. Ver [Guia da área privada](docs/PORTAL_PRIVADO.md).
