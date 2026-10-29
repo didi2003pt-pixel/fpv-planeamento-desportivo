@@ -167,16 +167,14 @@ export default function M365Portal() {
       <p className="m365-muted">Login Microsoft e planeamentos guardados em listas SharePoint separadas por classe. O Excel aprovado e o calendário demonstrativo permanecem inalterados.</p>
       {!ready && <p role="status" className="m365-box">A verificar a configuração Microsoft…</p>}
       {ready && !config && <section className="m365-box m365-unconfigured">
-        <h2>Continuar com Power Apps e SharePoint</h2>
-        <p>Já é possível criar e alterar atividades na aplicação Power Apps ligada à lista SharePoint da FPV. Ao guardar, o Power Apps atualiza o mesmo item da lista; o histórico de versões do SharePoint regista as alterações.</p>
-        <p><strong>Para ver o planeamento num calendário sem instalar nada:</strong></p>
-        <ol>
-          <li>Abre a lista da tua classe no SharePoint (por exemplo, a lista de testes ILCA 7).</li>
-          <li>No seletor de vistas, junto a «Todos os itens», escolhe <strong>Adicionar vista → Calendário</strong>.</li>
-          <li>Cria a vista <strong>Plano mensal</strong> com <code>StartDate</code> como início e <code>EndDate</code> como fim.</li>
-          <li>Cria outra vista <strong>Plano anual</strong> com <code>AnnualStartDate</code> e <code>AnnualEndDate</code>.</li>
-        </ol>
-        <p>As duas vistas mostram os mesmos registos, sem duplicação. A autenticação e as permissões continuam a ser geridas pela Microsoft.</p>
+        <h2>Calendários ILCA 7 no SharePoint</h2>
+        <p>As vistas <strong>Plano anual</strong> e <strong>Plano mensal</strong> já estão criadas na lista de testes ILCA 7. Podes abrir diretamente cada calendário com a tua conta autorizada da FPV.</p>
+        <div className="m365-shortcuts">
+          <a href={'https://fpvela.sharepoint.com/sites/FPVPlaneamentoDesportivo/Lists/FPV%20%20ILCA%207%20%20Teste/AllItems.aspx?viewid=f459755b-6106-4484-9012-f8874a3d5550&env=WebViewList'} target="_blank" rel="noopener noreferrer">Abrir Plano anual</a>
+          <a href="https://fpvela.sharepoint.com/sites/FPVPlaneamentoDesportivo/Lists/FPV%20%20ILCA%207%20%20Teste/AllItems.aspx?viewid=099c2b9d%2D3d3a%2D4dc7%2D8f48%2D58a6c28a4dd8" target="_blank" rel="noopener noreferrer">Abrir Plano mensal</a>
+        </div>
+        <p>Os calendários abrem no SharePoint, que continua a controlar o início de sessão e as permissões. Estes links não tornam os dados públicos.</p>
+        <p><strong>Para criar e alterar atividades:</strong> utiliza o Power Apps ligado à lista SharePoint. O histórico de versões regista as alterações ao mesmo item.</p>
         <div className="m365-shortcuts">
           <a href="https://make.powerapps.com/" target="_blank" rel="noopener noreferrer">Abrir Power Apps</a>
           <a href="https://www.microsoft365.com/launch/Lists" target="_blank" rel="noopener noreferrer">Abrir Microsoft Lists</a>
