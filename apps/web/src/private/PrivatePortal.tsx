@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { api, ApiError, type Account, type Activity, type Profile, type SailingClass } from './api';
+import {
+  api, ApiError, newActivityPayload, privateActivityTypes,
+  type Account, type Activity, type NewPrivateActivity, type Profile, type SailingClass,
+} from './api';
 import './private.css';
 
 type Screen = 'accounts' | 'classes' | 'activities';
@@ -16,6 +19,17 @@ function monthRange() {
   ].join('-');
   return { from: civil(new Date(year, month, 1)), to: civil(new Date(year, month + 1, 0)) };
 }
+function initialActivityDraft(): NewPrivateActivity {
+  return { title: '', sailingClassId: '', type: 'CAMP', startDate: '', endDate: '',
+    location: '', expectedAthleteCount: 0 };
+}
+
+function activityMonthRange(iso: string) {
+  const year = Number(iso.slice(0, 4)), month = Number(iso.slice(5, 7));
+  const last = String(new Date(year, month, 0).getDate()).padStart(2, '0');
+  return { from: iso.slice(0, 7) + '-01', to: iso.slice(0, 7) + '-' + last };
+}
+
 function day(iso: string | null | undefined): string {
   if (!iso) return '—';
   const date = iso.slice(0, 10);
@@ -49,6 +63,7 @@ export default function PrivatePortal() {
   const [items, setItems] = useState<Activity[]>([]);
   const [truncated, setTruncated] = useState(false);
   const [range, setRange] = useState(monthRange);
+  const [newActivity, setNewActivity] = useState<NewPrivateActivity>(initialActivityDraft);
 
   const admin = profile?.role === 'ADMIN';
   const selected = useMemo(() => accounts.find(item => item.id === selectedId),
@@ -112,6 +127,7 @@ export default function PrivatePortal() {
       await api('/auth/logout', 'POST', {});
       setProfile(null); setSession('signed-out');
       setAccounts([]); setClasses([]); setItems([]); setSelectedId('');
+      setNewActivity(initialActivityDraft());
     } catch (reason) {
       // Não mostrar a sessão como terminada quando a revogação falha no servidor.
       setError(message(reason));
@@ -185,6 +201,39 @@ export default function PrivatePortal() {
     finally { setBusy(false); }
   }
 
+  async function createActivity(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(''); setNotice('');
+    if (profile?.role !== 'COACH') return;
+    let payload: ReturnType<typeof newActivityPayload>;
+    try {
+      if (!classes.some(item => item.id === newActivity.sailingClassId)) {
+        throw new Error('Seleciona uma classe atribuída à tua conta.');
+      }
+      payload = newActivityPayload(newActivity);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Confirma os dados da atividade.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await api('/activities', 'POST', payload);
+      const nextRange = activityMonthRange(newActivity.startDate);
+      setRange(nextRange);
+      setNewActivity(current => ({ ...initialActivityDraft(), sailingClassId: current.sailingClassId }));
+      setNotice('Atividade de teste guardada no servidor. A previsão anual foi preservada.');
+      // A gravação já terminou; uma falha a atualizar a lista não deve levar a criar duplicados.
+      try {
+        const query = new URLSearchParams({ from: nextRange.from, to: nextRange.to });
+        const result = await api<{ items: Activity[]; truncated: boolean }>('/activities?' + query);
+        setItems(result.items); setTruncated(result.truncated);
+      } catch {
+        setError('Atividade guardada, mas não foi possível atualizar a lista. Carrega em Consultar.');
+      }
+    } catch (reason) { setError(message(reason)); }
+    finally { setBusy(false); }
+  }
+
   if (session === 'checking') return (
     <main className="private-shell private-centered"><p role="status">A verificar sessão privada…</p></main>
   );
@@ -242,6 +291,47 @@ export default function PrivatePortal() {
               {admin ? 'Consulta global das atividades registadas.' :
                 'Só são devolvidas pelo servidor as atividades das classes autorizadas para esta conta.'}
             </p>
+            {profile?.role === 'COACH' && <section className="private-panel">
+              <h2>Registar atividade do plano anual</h2>
+              <p className="private-muted">Apenas para testes com dados fictícios. O servidor associa automaticamente a atividade à tua conta e verifica a classe.</p>
+              <form className="private-grid-form" onSubmit={createActivity}>
+                <label>Classe
+                  <select required value={newActivity.sailingClassId}
+                    onChange={e => setNewActivity(v => ({ ...v, sailingClassId: e.target.value }))}>
+                    <option value="">Seleciona a classe</option>
+                    {classes.map(item => <option key={item.id} value={item.id}>{item.code}</option>)}
+                  </select>
+                </label>
+                <label>Tipo de atividade
+                  <select value={newActivity.type}
+                    onChange={e => setNewActivity(v => ({ ...v, type: e.target.value as NewPrivateActivity['type'] }))}>
+                    {privateActivityTypes.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+                  </select>
+                </label>
+                <label>Nome da atividade
+                  <input required maxLength={200} value={newActivity.title}
+                    onChange={e => setNewActivity(v => ({ ...v, title: e.target.value }))} />
+                </label>
+                <label>Local
+                  <input maxLength={200} value={newActivity.location}
+                    onChange={e => setNewActivity(v => ({ ...v, location: e.target.value }))} />
+                </label>
+                <label>Início previsto
+                  <input required type="date" value={newActivity.startDate}
+                    onChange={e => setNewActivity(v => ({ ...v, startDate: e.target.value }))} />
+                </label>
+                <label>Fim previsto
+                  <input required type="date" min={newActivity.startDate || undefined} value={newActivity.endDate}
+                    onChange={e => setNewActivity(v => ({ ...v, endDate: e.target.value }))} />
+                </label>
+                <label>Atletas previstos (sem nomes)
+                  <input required type="number" min={0} max={200} step={1}
+                    value={newActivity.expectedAthleteCount}
+                    onChange={e => setNewActivity(v => ({ ...v, expectedAthleteCount: Number(e.target.value) }))} />
+                </label>
+                <button type="submit" disabled={busy || classes.length === 0}>Guardar atividade</button>
+              </form>
+            </section>}
             <form className="private-range" onSubmit={loadActivities}>
               <label>De<input type="date" required value={range.from}
                 onChange={e => setRange(v => ({ ...v, from: e.target.value }))} /></label>
@@ -264,7 +354,7 @@ export default function PrivatePortal() {
                   <td>{item.status}{item.monthlyConfirmed ? ' · Mensal confirmado' : ''}</td>
                 </tr>)}</tbody></table></div>}
             </div>
-            <p className="private-muted">Nesta etapa, a área privada consulta atividades. O formulário de criação e edição será integrado na etapa seguinte.</p>
+            <p className="private-muted">Os treinadores podem registar atividades de teste. A edição e a confirmação mensal serão integradas a seguir, mantendo o histórico no servidor.</p>
           </>}
 
           {admin && tab === 'accounts' && <>

@@ -275,9 +275,6 @@ function App() {
             <span>♙</span> Acesso privado (Docker)
           </a>
         )}
-        <a className="nav-inactive nav-action m365-entry" href={import.meta.env.BASE_URL + '?m365=1'}>
-          <span>☁</span> Microsoft 365 (piloto)
-        </a>
         <div className="nav-section-title muted-nav-title">EM PREPARAÇÃO</div>
         <div className="nav-inactive"><span>◫</span> Gestão de atividades</div>
         <button type="button" className="nav-inactive nav-action"

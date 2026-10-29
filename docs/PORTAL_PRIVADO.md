@@ -15,9 +15,11 @@ Esta etapa adiciona uma interface React para testar os endpoints das etapas INC-
 - Para ADMIN: consultar contas e classes, criar contas **fictícias**, criar classes, atribuir várias classes a um treinador, ativar/desativar contas.
 - Controlo de concorrência em alterações de conta, sem sobrescrever atualizações posteriores feitas por outro administrador.
 - Para COACH/VIEWER/COORDINATOR: consultar atividades persistidas e classes no âmbito permitido pelo backend. A interface não substitui a autorização aplicada na API.
+- Para COACH: criar uma atividade de teste com classe atribuída, tipo, datas, local e número previsto de atletas. A API associa automaticamente a conta do treinador, guarda no PostgreSQL, preserva a previsão anual e regista a criação no histórico. Depois de guardar, a lista mostra o mês de início.
+- Para VIEWER: consulta apenas, sem formulário de criação. A coordenação e a administração continuam a consultar; criação em nome de outros treinadores não faz parte deste incremento.
 - Erros 401, 403, 404, 409 e 429 com mensagens que não expõem detalhes internos.
 
-**Ainda não existe editor de atividades no portal privado**, integração com Excel privado, gestão de atletas ou convites para definição da própria password. São incrementos posteriores. Não usar dados reais nesta fase.
+**Ainda não existe edição nem confirmação mensal na interface privada**, integração com o calendário React/Excel privado, gestão de atletas ou convites para definição da própria password. São incrementos posteriores. Não usar dados reais nesta fase.
 
 ## Teste técnico isolado
 
